@@ -86,6 +86,11 @@ int ServerAcceptClient(int * listenfd)
 
 /**
  * Send message to given fd
+ * Input:
+ * int sendf			- file discriptor to which send the given data
+ * void *buf			- pointer to the data buffer
+ * size_t len 			- length of data that has to be sent
+ * uint8_t type			- type of the message that will be sent
  */
 uint8_t SendMessage(int sendfd, void * buf, size_t len, uint8_t msg_type)
 {
@@ -108,9 +113,12 @@ uint8_t SendMessage(int sendfd, void * buf, size_t len, uint8_t msg_type)
 /**
  * Attempts to recieve a message from gived file discriptor;
  * Returns pointer to the recieved message payload, this has to be freed later.
- *
+ * Input:
+ * int readfd 			- file discriptor from which to read data;
+ * Output:
+ * uint8_t *msg_type	- type of the recieved message;
  */
-void *RecieveMessage(int readfd)
+void *RecieveMessage(int readfd, uint8_t *msg_type)
 {
     struct Header msg_hdr;
     size_t recieved = 0;
@@ -120,6 +128,7 @@ void *RecieveMessage(int readfd)
         recieved += read(readfd, &msg_hdr + recieved, sizeof(msg_hdr) - recieved );
     }
 	msg_hdr.length = ntohl(msg_hdr.length);
+	*msg_type = msg_hdr.type;
 	printf("Recieved message type: %d, len: %d\n", msg_hdr.type, msg_hdr.length );
 
     recieved = 0;
@@ -127,6 +136,7 @@ void *RecieveMessage(int readfd)
     while ( recieved != msg_hdr.length )
     {
         recieved += read(readfd, buf + recieved, sizeof(msg_hdr.length) - recieved );
+		printf("%d/%d\n", recieved, msg_hdr.length);
     }
     return buf;    
 }

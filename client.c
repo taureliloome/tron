@@ -13,6 +13,8 @@
 
 int main(int argc, char *argv[])
 {
+	uint8_t keep_alive = 1;
+	uint8_t msg_type = 0;
     int sockfd = 0, n = 0;
     char recvBuff[1024];
 
@@ -26,14 +28,34 @@ int main(int argc, char *argv[])
 
     ConnectToServer(argv[1], argv[2], &sockfd);
 
-    while (1)
+    while (keep_alive)
     {
-		int *num = RecieveMessage(sockfd);
-		if ( num ) 
+		void *buf = RecieveMessage(sockfd, &msg_type);
+		if ( buf ) 
 		{
-			printf("recieved: %d\n", *num);
-			free(num);
-			break;
+			switch(msg_type) {
+				case 1:
+					keep_alive = 0;
+					printf("connection request recieved - WTF????\n");
+					break;
+				case 2:
+					printf("connection accepted - execute connection sequences!!!!!!\n");
+					keep_alive = 0;
+					break;
+				case 3:
+					printf("new intelengence has been recieved, update our databases\n");
+					keep_alive = 0;
+					break;
+				case 4:
+					keep_alive = 0;
+					printf("event has arrive, again WTF?????\n");
+					break;
+				default:
+					keep_alive = 0;
+					printf("we are burried in trash T_T\n");
+					break;
+			}
+			free(buf);
 		}
     }
 

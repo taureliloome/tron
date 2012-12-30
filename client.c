@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <arpa/inet.h>
+#include "packets.h"
+#include "socket_if.h"
 
 int main(int argc, char *argv[])
 {
@@ -22,7 +24,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    ConnectToServer(argv[2], sockfd);
+    ConnectToServer(argv[2], &sockfd);
 
     while ( (n = read(sockfd, recvBuff, sizeof(recvBuff)-1)) > 0)
     {

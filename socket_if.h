@@ -26,7 +26,7 @@ uint8_t ConnectToServer(const char *ip, int *sockfd) {
         return 0;
     }
 
-    if( connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    if( connect(*sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
        printf("\n Error : Connect Failed \n");
        return 0;

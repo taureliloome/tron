@@ -18,26 +18,23 @@ int main(int argc, char *argv[])
 
     memset(recvBuff, '0',sizeof(recvBuff));
 
-    if(argc != 2)
+    if(argc != 3)
     {
-        printf("\n Usage: %s <ip of server> \n",argv[0]);
+        printf("\n Usage: %s <ip of server> <port of server>\n",argv[0]);
         return 1;
     }
 
-    ConnectToServer(argv[2], &sockfd);
+    ConnectToServer(argv[1], argv[2], &sockfd);
 
-    while ( (n = read(sockfd, recvBuff, sizeof(recvBuff)-1)) > 0)
+    while (1)
     {
-        recvBuff[n] = 0;
-        if(fputs(recvBuff, stdout) == EOF)
-        {
-            printf("\n Error : Fputs error\n");
-        }
-    }
-
-    if(n < 0)
-    {
-        printf("\n Read error \n");
+		int *num = RecieveMessage(sockfd);
+		if ( num ) 
+		{
+			printf("recieved: %d\n", *num);
+			free(num);
+			break;
+		}
     }
 
     return 0;

@@ -8,36 +8,29 @@
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
+#include "packets.h"
+#include "socket_if.h"
 
 int main(int argc, char *argv[])
 {
-    int listenfd = 0, cdonnfd = 0;
-    struct sockaddr_in serv_addr;
+    int listenfd = 0, connfd = 0;
 
-    char sendBuff[1025];
-    time_t ticks;
-
-    listenfd = socket(AF_INET, SOCK_STREAM, 0);
-    memset(&serv_addr, '0', sizeof(serv_addr));
-    memset(sendBuff, '0', sizeof(sendBuff));
-
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    serv_addr.sin_port = htons(5000);
-
-    bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
-
-    listen(listenfd, 10);
+	if ( argc != 2 )
+	{
+        printf("\n Usage: %s <port of server>\n",argv[0]);
+		return 1;
+	}
+    CreateListenSocket(argv[1], &listenfd);
 
     while(1)
     {
-        connfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
-
-        ticks = time(NULL);
-        snprintf(sendBuff, sizeof(sendBuff), "%.24s\r\n", ctime(&ticks));
-        write(connfd, sendBuff, strlen(sendBuff));
+		connfd = ServerAcceptClient(&listenfd);
+		int a = 5639;
+		SendMessage(connfd, &a, sizeof(a), PCKT_UPDATE);
 
         close(connfd);
-        sleep(1);
-     }
+        break;
+	}
+	close(listenfd);
+	return 0;
 }

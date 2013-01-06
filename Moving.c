@@ -9,6 +9,8 @@
 #define B_BIKE      'X'
 #define B_BIKE_HEAD 'O'
 #define LENGHT_LIMIT 10
+#define BULLET_SPEED 2
+#define BULLET_CD 20
  
 typedef struct BikeBlock_ {
     int x;
@@ -23,16 +25,18 @@ void draw_map(int fx, int fy, BikeBlock bike[], int length);
 void place_food(int *x, int *y, BikeBlock bike[], int length);
 void grow(int **Field, BikeBlock bike[], int length);
 void remove_tail(int **Field, BikeBlock bike[], int length);
+void shoot();
+void move_bullets();
 _Bool is_empty(int x, int y, BikeBlock bike[], int length);
  
 int main(void)
 {
     int **Field;
     BikeBlock *bike;
-    bike = (BikeBlock*) malloc(LENGHT_LIMIT*sizeof(BikeBlock));
+    bike = (BikeBlock*) malloc((LENGHT_LIMIT+2)*sizeof(BikeBlock));
     WINDOW *key_detecter;
     struct timespec sleep_time;
-    int i, k, j;
+    int i, k, j, BCD = 0;
     int xadd, yadd;
     int running;
     int length;
@@ -63,7 +67,7 @@ int main(void)
     bike[0].x = WIDTH / 2;
     bike[0].y = HEIGHT / 2;
     Field[bike[0].x][bike[0].y]=1;
-    length = 1;
+    length = 2;
      
     while(running) {
         c = wgetch(key_detecter);
@@ -84,18 +88,27 @@ int main(void)
                 xadd = 1;
 		yadd = 0;
                 break;
+	    case ' ':
+		running = 2;
+		BCD = BULLET_CD;
+		break;
             case 'q':
                 running = 0;
                 break;
-	    case ' ':
-		running = 2;
         }
-	
+	if (BCD > 0) BCD--;
+	else
+	    if (running == 2)
+	    {
+		
+		running = 1;
+	    }	
+
 	if (bike[0].x + xadd < 0 || bike[0].x + xadd > WIDTH - 1|| bike[0].y + yadd < 0 || bike[0].y + yadd > HEIGHT)
             running = 0;
 	else
 	{
-	    if (length<LENGHT_LIMIT)
+	    if (length<LENGHT_LIMIT+2)
 		grow(Field, bike, length++);
 	    else
 		remove_tail(Field, bike, length);
@@ -155,7 +168,8 @@ void draw_map(int fx, int fy, BikeBlock bike[], int length)
 {
     int i;
     mvaddch(bike[0].y, bike[0].x, B_BIKE_HEAD);
-    for (i = 1; i < length; i++) {
+    mvaddch(bike[1].y, bike[1].x, B_BIKE_HEAD);
+    for (i = 2; i < length; i++) {
         if (bike[i].y != -1 && bike[i].x != -1) {
             mvaddch(bike[i].y, bike[i].x, B_BIKE);
         }
@@ -197,3 +211,5 @@ void remove_tail(int **Field, BikeBlock bike[], int length)
     bike[length - 1].x = -1;
     bike[length - 1].y = -1;
 }
+
+//gcc -g3 -o Moving Moving.c -lncurses

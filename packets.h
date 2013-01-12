@@ -1,3 +1,5 @@
+#ifndef _PACKETS_H_
+#define _PACKETS_H_
 #include <stdarg.h>
 
 const uint32_t DIR_RIGHT    = 0;
@@ -83,3 +85,5 @@ struct EventPlayer {
     uint8_t direction;         // MOVE_*
     uint8_t shot;              // 1 - izšauj, 0 - nešauj
 } __attribute__((packed));
+
+#endif /* _PAKCETS_H_  */

@@ -66,7 +66,7 @@ int main(void)
      
     bike[0].x = WIDTH / 2;
     bike[0].y = HEIGHT / 2;
-    Field[bike[0].x][bike[0].y]=1;
+    //Field[bike[0].x][bike[0].y]=1;
     length = 2;
      
     while(running) {
@@ -212,4 +212,3 @@ void remove_tail(int **Field, BikeBlock bike[], int length)
     bike[length - 1].y = -1;
 }
 
-//gcc -g3 -o Moving Moving.c -lncurses

@@ -10,6 +10,7 @@
 #include <time.h>
 #include <pthread.h>
 
+#include "logger.h"
 #include "packets.h"
 #include "socket_if.h"
 
@@ -30,6 +31,7 @@ static uint8_t game_state = GS_STARTUP;
 
 int main(int argc, char *argv[])
 {
+	setLogLevel(LOG_LEVEL_ALL);
     int listenfd = 0, playerCount = 5;
 
 	if ( argc != 2 )
@@ -53,13 +55,13 @@ static void waitForPlayers(int reqClientCount, int listenfd)
 		connfd = ServerAcceptClient(&listenfd);
 
 		if ( connfd ) {
-			printf("<SERVER> New player connected\n");
+			NOTICE("<SERVER> New player connected\n");
 			uint8_t client_count = getClientCount();
 			pthread_create(&derive_thread, 0, &clientHandler, (void*)&connfd );
 			pthread_detach(derive_thread);
 		}
 	}
-	printf("<SERVER> All players connected\n");
+	NOTICE("<SERVER> All players connected\n");
 	game_state = GS_IN_PROGRESS;
 }
 
@@ -68,18 +70,19 @@ static void* clientHandler(void *fd)
 	int connfd = *(int *)fd;
 	uint8_t msg_type = 0, timeout = 0;
 	int a = 5639, i = 0;
+	SendMessage(connfd, &a, sizeof(a), PCKT_CONNECTION_RESPONSE);
 	while(1) {
 		//TODO update message has to be sent here, replace a with require function
 		SendMessage(connfd, &a, sizeof(a), PCKT_UPDATE);
 		RecieveMessage(connfd, &msg_type, &timeout);
 		if ( timeout >= 5 )
 		{
-			printf("<SERVER> Dropping player %d due to timeout\n", connfd);
+			NOTICE("<SERVER> Dropping player %d due to timeout\n", connfd);
 			break;
 		}
 		if ( msg_type == PCKT_EVENT )
 		{
-//			printf("<SERVER> Received data from player %d\n", connfd);
+			DEBUG("<SERVER> Received data from player %d\n", connfd);
 			if ( getClientCount() == 5 ) { 
 				decrClientCount(); 
 				decrClientCount(); 

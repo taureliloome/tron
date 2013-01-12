@@ -8,11 +8,14 @@
 #include <unistd.h>
 #include <errno.h>
 #include <arpa/inet.h>
+
+#include "logger.h"
 #include "packets.h"
 #include "socket_if.h"
 
 int main(int argc, char *argv[])
 {
+	setLogLevel(LOG_LEVEL_ALL);
 	uint8_t keep_alive = 1;
 	uint8_t msg_type = 0, timeout = 0;
 	int sockfd = 0, n = 0;
@@ -26,27 +29,27 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	ConnectToServer(argv[1], argv[2], &sockfd);
+	keep_alive = ConnectToServer(argv[1], argv[2], &sockfd);
 
 	while (keep_alive)
 	{
 		void *buf = RecieveMessage(sockfd, &msg_type, &timeout);
 		if ( timeout == 5 ) {
 			keep_alive = 0;
-			printf("Connection to server timed out\n");
+			ERROR("Connection to server timed out\n");
 		} else {
 			if ( buf ) 
 			{
 				switch(msg_type) {
 					case 2:
-						printf("connection accepted - execute connection sequences!!!!!!\n");
+						NOTICE("Connected to server, please stand by\n");
 						break;
 					case 3:
-						//printf("new intelengence has been recieved, update our databases\n");
+						DEBUG("Update information recieved\n" /*TODO add data here for debuging */);
 						break;
 					default:
 						keep_alive = 0;
-						printf("we are burried in trash T_T\n");
+						DEBUG("Trashed unhandeled message type:%d\n", msg_type);
 						break;
 				}
 				free(buf);

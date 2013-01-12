@@ -50,20 +50,20 @@ uint8_t ConnectToServer(const char *ip, const char *port, int *sockfd)
 
 	if((*sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
-		printf("\n Error : Could not create socket \n");
+		ERROR("\n Error : Could not create socket \n");
 		return 0;
 	}
 
 	if(inet_pton(AF_INET, ip, &serv_addr.sin_addr)<=0)
 	{
-		printf("\n inet_pton error occured\n");
+		ERROR("\n inet_pton error occured\n");
 		return 0;
 	}
 
 	if( connect(*sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
 	{
-	   printf("\n Error : Connect Failed \n");
-	   return 0;
+		ERROR("\n Error : Connect Failed \n");
+		return 0;
 	}
 	return 1;
 }
@@ -89,7 +89,7 @@ uint8_t CreateListenSocket(const char *port, int *listenfd)
 
 	if ( bind(*listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) )
 	{
-		perror("unable to bind to listen socket: ");
+		ERROR("Unable to bind to the listen socket: ");
 		return 0;
 	}
 	return 1;
@@ -162,11 +162,12 @@ void *RecieveMessage(int readfd, uint8_t *msg_type, uint8_t *timeout)
 
 	if ( res == 0 ){
 		*timeout++;
-		//printf("Timed out, retry %d\n", *timeout);
+		ERROR("Timed out, retry %d\n", *timeout);
 		return NULL;
 	}
 	else if ( res == -1 ) {
-		perror("Error in select:");
+		ERROR("Error in select:");
+		perror("");
 		return NULL;
 	}
 	*timeout = 0;
@@ -176,14 +177,14 @@ void *RecieveMessage(int readfd, uint8_t *msg_type, uint8_t *timeout)
 	}
 	msg_hdr.length = ntohl(msg_hdr.length);
 	*msg_type = msg_hdr.type;
-//	printf("received message type: %d, len: %d\n", msg_hdr.type, msg_hdr.length );
+	DEBUG("received message type: %d, len: %d\n", msg_hdr.type, msg_hdr.length );
 
 	received = 0;
 	void * buf = malloc(msg_hdr.length);
 	while ( received != msg_hdr.length )
 	{
 		received += read(readfd, buf + received, sizeof(msg_hdr.length) - received );
-//		printf("%d/%d\n", received, msg_hdr.length);
+		DEBUG("%d/%d\n", received, msg_hdr.length);
 	}
 	return buf;	
 }

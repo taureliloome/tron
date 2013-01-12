@@ -13,6 +13,7 @@
 #include "logger.h"
 #include "packets.h"
 #include "socket_if.h"
+#include "Graphics.h"
 
 static void* clientHandler(void *fd);
 static void waitForPlayers(int reqClientCount, int listenfd);
@@ -28,6 +29,7 @@ typedef enum {
 } game_state_t;
 
 static uint8_t game_state = GS_STARTUP;
+static World_t *MyWorld;
 
 int main(int argc, char *argv[])
 {

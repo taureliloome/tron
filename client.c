@@ -13,20 +13,20 @@
 #include "logger.h"
 #include "packets.h"
 #include "socket_if.h"
-#include "World.h"
-#include "Moving.h"
-
+#include "Graphics.h"
+static	World_t game;
 int main(int argc, char *argv[])
 {
 	FILE *fd = fopen("debug.out", "rw+");
 	setOutputType(fd);
 	setLogLevel(LOG_LEVEL_ALL);
-	World game;
+
 	uint8_t keep_alive = 1;
 	uint8_t msg_type = 0, timeout = 0;
 	int sockfd = 0, n = 0,c=0,xadd=0,yadd=1,BCD=0,running=1, startx=30,starty=30;
 	char recvBuff[1024];
 	uint8_t gameStarted = 0;
+	struct EventPlayer event;
 	sleep_time.tv_sec  = 0;
     sleep_time.tv_nsec = 450000000;
 
@@ -87,12 +87,15 @@ int main(int argc, char *argv[])
 					//TODO pass c to world
 					//TODO send
 #ifdef SERVER_ACTIVE
-					SendMessage(sockfd, &a, sizeof(a), PCKT_EVENT);
+					event.direction=(getSelf(&game)).direction;
+					if ( c == ' ')
+						event.shot = 1;
+					SendMessage(sockfd, &event, sizeof(event), PCKT_EVENT);
 #endif
 				}
 		    }
 
-			drawWorld();			
+			drawWorld(&game);			
 			refresh();
 			//TODO: replace int a with proper EVENT structure!!!
 		}

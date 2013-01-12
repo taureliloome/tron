@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <ncurses.h>
 #include <term.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -21,16 +20,16 @@ typedef enum Objects{
 }object_t;
 
 /* One cell structure */
-struct WorldCell {
+typedef struct WorldCell {
 	uint32_t x;
 	uint32_t y;
     uint32_t type;      //Šūnas tips
     uint32_t id;	//Spēlētaja id, kuram pieder objekts 
 	uint32_t dir;
-} __attribute__((packed));
+}__attribute__((packed)) WorldCell_t ;
 
 typedef struct World {
-	void **Field;		/* Divdimensiju masivs ar noradem uz objektu kurš aizņem konkrētu šunu. */
+	void ***Field;	/* Divdimensiju masivs ar noradem uz objektu kurš aizņem konkrētu šunu. */
 	void *Players;		/* Visu spēlētāju objektu pūls. Satur koordinātes, virzienu utl. */
 	void *Bullets;		/* Visu iespējamo ložu pūls. */
 
@@ -52,8 +51,10 @@ typedef struct World {
 	uint32_t playerCountAlive;
 }World_t;
 
-World_t *MyWorld;
-
+struct UpdatePlayer* getSelf(World_t *MyWorld)
+{
+	return &MyWorld->Players[0];	
+}
 #if 0
 void CreateServerWorld(World *someWorld)
 {

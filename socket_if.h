@@ -2,6 +2,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "logger.h"
+
 /**
   * Currently connected client count
   */
@@ -92,6 +94,7 @@ uint8_t CreateListenSocket(const char *port, int *listenfd)
 		ERROR("Unable to bind to the listen socket: ");
 		return 0;
 	}
+	NOTICE("Server started on with given port:%s", port);
 	return 1;
 }
 

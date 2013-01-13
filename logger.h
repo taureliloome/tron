@@ -12,16 +12,12 @@ typedef enum loglevel_e{
 	LOG_LEVEL_DEBUG,
 	LOG_LEVEL_ALL
 } loglevel_t;
-static loglevel_t loglevel = LOG_LEVEL_DEBUG;
-static FILE *output = NULL;
 
-void setLogLevel(loglevel_t new_log) {
-	loglevel = new_log;
-}
+extern loglevel_t loglevel;
+extern FILE *output;
 
-void setOutputType(FILE *type) {
-	output = type;
-}
+void setLogLevel(loglevel_t new_log);
+void setOutputType(FILE *type);
 
 #define CRITICAL(__msg,...) \
 	if ( loglevel >= LOG_LEVEL_CRITICAL ){ \

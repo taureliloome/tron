@@ -16,6 +16,8 @@
 #include "socket_if.h"
 #include "Graphics.h"
 
+/*eggs aaaaaaaaaaa*/
+
 static	World_t game;
 int main(int argc, char *argv[])
 {

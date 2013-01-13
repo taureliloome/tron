@@ -41,7 +41,6 @@ typedef struct World {
 	void *Players;		/* Visu spēlētāju objektu pūls. Satur koordinātes, virzienu utl. */
 	void *Bullets;		/* Visu iespējamo ložu pūls. */
 
-	void *Bikes;		/* Spēlētāju motocikli */
 	Tail_t *Tails;		/* Spēlētāju astes */
 
 	/* Pasaules configurācija */
@@ -65,23 +64,74 @@ struct UpdatePlayer* getSelf(World_t *MyWorld)
 	return MyWorld->Players;   // Jo massiva [0] elements ir vienads ar pointera adresi
 }
 
+void init_world(World_t *someWorld)
+{
+	int bulletMultiplier = 0, maxSide = 0, i = 0;
+	
+	someWorld->height = 24;    
+    someWorld->width = 80;
+
+	if (someWorld->height >= someWorld->width)
+		maxSide = someWorld->height;
+	else
+		maxSide = someWorld->width;
+
+	/* Pasaules konfigurācija */
+
+	someWorld->timeout = 100;
+	someWorld->frameRate = 2;
+	someWorld->bulletSpeed = 4;
+	someWorld->bulletCoolDown = 3;
+	someWorld->playerCountMax = 4;
+	someWorld->tailLengthMax = 10;
+	bulletMultiplier = maxSide / (someWorld->bulletCoolDown * someWorld->bulletSpeed);
+	if (maxSide % (someWorld->bulletCoolDown * someWorld->bulletSpeed)>0)
+		bulletMultiplier++;
+
+	someWorld->bulletCountMax = bulletMultiplier * someWorld->playerCountMax;
+	someWorld->bulletCountAlive = 0;
+	someWorld->playerCountAlive = 0;
+	someWorld->tailCountAlive = 0;
+
+	Tail_t *Tails;		/* Spēlētāju astes */
+
+	/* Divdimensiju masivs ar noradem uz objektu kurš aizņem konkrētu šunu. */
+
+// WARNING SHIT CODED 2d ARRAY REFACTOR NAHOOOJ
+
+	someWorld->Field = (void** ) malloc( someWorld->width * sizeof(void*)); 
+	for ( i= 0; i < someWorld->width; i++) {
+	  someWorld->Field[i] = (void*) malloc( someWorld->height * sizeof(struct WorldCell));
+	}
+	
+	/* Visu spēlētāju objektu pūls. Satur koordinātes, virzienu utl. */
+	someWorld->Players =  malloc( someWorld->playerCountMax * sizeof(struct UpdatePlayer)); 
+
+	/* Visu iespējamo ložu pūls. */
+	someWorld->Bullets =  malloc( someWorld->bulletCountMax * sizeof(struct UpdateBullet) ); 
+	
+	/* Visu astes saraksts */
+	someWorld->Tails = (Tail_t *) malloc( someWorld->playerCountMax * sizeof(Tail_t) ); 
+	
+}
 
 void * getUpdateMessage(World_t *someWorld, size_t *length)
 {
-	void * packet,*tailPacket;
-	struct Header  header;
-	struct UpdatePlayerHeader plHeader;
-	struct UpdatePlayer *tempPlayer, *playerList;
+	void *packet,*tailPacket;
 
-	struct UpdateBulletHeader blHeader;
-	struct UpdateBullet *tempBullet,*bulletList;
+	struct UpdatePlayerHeader plHeader; //speletaju galvene
+	struct UpdatePlayer *tempPlayer, *playerList; // speletajs no pasaules;  speletaju saraksts aizsutisanai
+
+	struct UpdateBulletHeader blHeader;  //lozu galvene
+	struct UpdateBullet *tempBullet,*bulletList;; // lode no pasaules;  lozu saraksts aizsutisanai
 	
 	struct UpdateTotalTailHeader totalTailHeader;  //Visu astes galvene
 	struct UpdateTailHeader *tempTailHeader; //Vienas astes galvene
 	struct UpdateTail tempCell,*tempCellList; // veina astes šūna;  šūnu saraksts
 	Tail_t *tempTail;  // lai ielasītu no pasaules vieni asti
 
-	int i=0,k=0,cellLengthSumm=0,size=0;
+	int i=0, k=0, cellLengthSumm=0, size=0;  // cellLengthSumm - visu astu šunu summa, lai aprekinatu astes paketes garumu;
+											// size - domats lai aprekinatu izmeru galejam paketam; 
 
 	/* Creating packet with list of players */
 
@@ -127,14 +177,17 @@ void * getUpdateMessage(World_t *someWorld, size_t *length)
 		cellLengthSumm += someWorld->Tails[i].length;
 	}
 
+	/* Tail packet to store header and list of cells of each tail */
+
 	tailPacket = malloc( sizeof(struct UpdateTail) * cellLengthSumm + sizeof(struct UpdateTailHeader) * someWorld->tailCountAlive );
+	
 	size += sizeof( struct UpdateTail ) * cellLengthSumm + sizeof( struct UpdateTailHeader) * someWorld->tailCountAlive;
+
 	for(i = 0; i < someWorld->tailCountAlive; i++)
 	{
 		tempTailHeader = (struct UpdateTailHeader *) malloc( sizeof( struct UpdateTailHeader) ); // Izdalam atminu astes galvenei
 		tempTailHeader->id = tempTail->playerId;
 		tempTailHeader->tailCount = tempTail->length;
-		
 		
 		tempCellList = (struct UpdateTail *) malloc( tempTail->length * sizeof( struct UpdateTail) );
 		for(k=0 ; k < tempTail->length ; k++)
@@ -180,13 +233,15 @@ void CreateClientWorld(World_t *someWorld,struct ConnectionResponse * Params)
 	int k,i;
 	someWorld->height=Params->height;
 	someWorld->width=Params->width;
+// WARNING SHIT CODED 2d ARRAY REFACTOR NAHOOOJ
 	someWorld->Field = malloc(Params->width * sizeof(struct WorldCell));
+
     for (k = 0; k < Params->height; k++) 
     {
 		someWorld->Field[k] = malloc(sizeof(struct WorldCell*));
 		memset(someWorld->Field[k], 0, sizeof(struct WorldCell*));
     }
-	someWorld->Players= (struct UpdatePlayer*)malloc(someWorld->playerCountMax * sizeof(struct UpdatePlayer));
+	someWorld->Players = (struct UpdatePlayer*)malloc(someWorld->playerCountMax * sizeof(struct UpdatePlayer));
 //	for (i = 0; i < Params->width; i++)
 //		for ( k = 0; k < Params->height; k++)
 //		{
@@ -328,7 +383,7 @@ void MovePlayers(World_t *MyWorld)
 #if 0
 void CreateServerWorld(World *someWorld)
 {
-	int MaxSide = 0, BulletMultiplier = 0;
+	int maxSide = 0, bulletMultiplier = 0;
 	MyWorld=someWorld;
 	
 	MyWorld->Bikes;
@@ -342,13 +397,13 @@ void CreateServerWorld(World *someWorld)
 	MyWorld->timeout=100;
 	MyWorld->playerCount=4;
 	MyWorld->playerCountAlive=0;
-	BulletMultiplier = MaxSide/(MyWorld->bulletCoolDown*MyWorld->bulletSpeed);
-	if (MaxSide%(MyWorld->bulletCoolDown*MyWorld->bulletSpeed)>0)
-		BulletMultiplier++;
-	MyWorld->bulletCount=BulletMultiplier*MyWorld->playerCount;
+	bulletMultiplier = maxSide/(MyWorld->bulletCoolDown*MyWorld->bulletSpeed);
+	if (maxSide%(MyWorld->bulletCoolDown*MyWorld->bulletSpeed)>0)
+		bulletMultiplier++;
+	MyWorld->bulletCount=bulletMultiplier*MyWorld->playerCount;
 	MyWorld->Field=(WorldCell**)malloc(MyWorld->width * sizeof(WorldCell*));
 	MyWorld->Players= (UpdatePlayer*)malloc(MyWorld->playerCount * sizeof(UpdatePlayer*));
-	MyWorld->Bullets=(UpdateBullet*)malloc(BulletMultiplier * sizeof(UpdateBullet*));
+	MyWorld->Bullets=(UpdateBullet*)malloc(bulletMultiplier * sizeof(UpdateBullet*));
 }
 
 void addNewPlayer(int ID)
@@ -357,7 +412,7 @@ void addNewPlayer(int ID)
 }
 void CreateClientWorld(World *someWorld,ConnectionResponse * Params)
 {
-	int MaxSide = 0, BulletMultiplier = 0;
+	int maxSide = 0, bulletMultiplier = 0;
 	MyWorld=someWorld;
 	MyWorld->playerCountAlive=0;
 	MyWorld->Field = (WorldCell**)malloc(Params->WIDTH * sizeof(WorldCell*));
@@ -369,20 +424,20 @@ void CreateClientWorld(World *someWorld,ConnectionResponse * Params)
 	MyWorld->width=Params->width;
     MyWorld->Players = (UpdatePlayer*)malloc(Params->playerCount * sizeof(UpdatePlayer*));
 	if (MyWorld->height>=MyWorld->width)
-		MaxSide = MyWorld->height;
+		maxSide = MyWorld->height;
 	else
-		MaxSide = MyWorld->width;
+		maxSide = MyWorld->width;
 	MyWorld->tailLength=Params->tailLength
 	MyWorld->frameRate=Params->frameRate;
 	MyWorld->bulletSpeed=Params->bulletSpeed;
 	MyWorld->bulletCoolDown=Params->bulletCoolDown;
 	MyWorld->timeout=Params->timeout;	
 	MyWorld->playerCount=Params->playerCount;
-	BulletMultiplier = MaxSide/(MyWorld->bulletCoolDown*MyWorld->bulletSpeed);
-	if (MaxSide%(MyWorld->bulletCoolDown*MyWorld->bulletSpeed)>0)
-		BulletMultiplier++;
-	MyWorld->bulletCount=BulletMultiplier*MyWorld->playerCount;
-	MyWorld->Bullets=(UpdateBullet*)malloc(BulletMultiplier * sizeof(UpdateBullet*));
+	bulletMultiplier = maxSide/(MyWorld->bulletCoolDown*MyWorld->bulletSpeed);
+	if (maxSide%(MyWorld->bulletCoolDown*MyWorld->bulletSpeed)>0)
+		bulletMultiplier++;
+	MyWorld->bulletCount=bulletMultiplier*MyWorld->playerCount;
+	MyWorld->Bullets=(UpdateBullet*)malloc(bulletMultiplier * sizeof(UpdateBullet*));
 	for (i=0;i<MyWorld->bulletCount;i++)
 		MyWorld->Bullets[i]->direction = -1;
 };

@@ -1,6 +1,6 @@
 all: mkdir server client
 
-mkdir: ./build
+mkdir:
 	test -d ./build || mkdir ./build
 
 client: 

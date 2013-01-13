@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 	uint8_t gameStarted = 0;
 	struct EventPlayer event;
 	sleep_time.tv_sec  = 0;
-    sleep_time.tv_nsec = 450000000;
+    	sleep_time.tv_nsec = 450000000;
 
 	memset(recvBuff, '0',sizeof(recvBuff));
 

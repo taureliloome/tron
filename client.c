@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 							Message contains servers rules;
 						*/
 						NOTICE("Connected to server, please stand by\n");
-//						CreateClientWorld(&game, buf);
+						CreateClientWorld(&game, buf);
 						break;
 					case 3:
 						/* Update message received; calculate wait for button pressed */
@@ -89,21 +89,26 @@ int main(int argc, char *argv[])
 			{
 				init_game();
 				c = wgetch(key_detecter); 
-				//if ( c != ERR ) {
-					//TODO pass c to world
-					//TODO send
+
+				if ( c != ERR ) {
+					ClientMove(c, &game);//TODO pass c to world-done
+				}
+				
 #ifdef SERVER_ACTIVE
-					event.direction = DIR_UP;// (getSelf(&game))->direction;
+					event.direction = (getSelf(&game))->direction;
 					if ( c == ' ')
 						event.shot = 1;
 					else
 						event.shot = 0;
 					SendMessage(sockfd, &event, sizeof(event), PCKT_EVENT);
+
 					DEBUG("Sending update event { %d, %d } to server \n", event.direction, event.shot );
 #endif
-				//}
-		    }
+				
+				
 
+		    }
+			
 			drawWorld(&game);			
 			refresh();
 		}

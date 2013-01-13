@@ -175,6 +175,156 @@ void * getUpdateMessage(World_t *someWorld, size_t *length)
 	return packet;
 }
 
+void CreateClientWorld(World_t *someWorld,struct ConnectionResponse * Params)
+{
+	int k,i;
+	someWorld->height=Params->height;
+	someWorld->width=Params->width;
+	someWorld->Field = malloc(Params->width * sizeof(struct WorldCell));
+    for (k = 0; k < Params->height; k++) 
+    {
+		someWorld->Field[k] = malloc(sizeof(struct WorldCell*));
+		memset(someWorld->Field[k], 0, sizeof(struct WorldCell*));
+    }
+	someWorld->Players= (struct UpdatePlayer*)malloc(someWorld->playerCountMax * sizeof(struct UpdatePlayer));
+//	for (i = 0; i < Params->width; i++)
+//		for ( k = 0; k < Params->height; k++)
+//		{
+//			((WorldCell_t *)someWorld->Field[i][k])->x = i;
+//			((WorldCell_t *)someWorld->Field[i][k])->y = K;
+//			((WorldCell_t *)someWorld->Field[i][k])->type = type;
+//			((WorldCell_t *)someWorld->Field[i][k])->id = id;
+//			((WorldCell_t *)someWorld->Field[i][k])->dir = dir;
+//		}
+}
+
+//voit InitField
+
+void ClientMove(int c, World_t *MyWorld)
+{
+	struct UpdatePlayer *CurPlayer;
+	CurPlayer = getSelf(MyWorld);
+	switch (c) 
+	{
+		case 'w':
+			CurPlayer->direction = DIR_UP;
+			break;
+		case 's':
+			CurPlayer->direction = DIR_DOWN;
+			break;
+		case 'a':
+			CurPlayer->direction = DIR_LEFT;
+			break;
+		case 'd':
+			CurPlayer->direction = DIR_RIGHT;
+			break;
+		case 'q':
+			//izdomaat par quit
+			break;
+	}
+}
+
+int getx(uint32_t dir)
+{
+	if (dir==DIR_UP || dir==DIR_DOWN)
+		return 0;
+	if (dir==DIR_LEFT)
+		return -1;
+	if (dir==DIR_RIGHT)
+		return 1;
+	return 0;
+}
+
+int gety(uint32_t dir)
+{
+	if (dir==DIR_LEFT || dir==DIR_RIGHT)
+		return 0;
+	if (dir==DIR_LEFT)
+		return -1;
+	if (dir==DIR_RIGHT)
+		return 1;
+	return 0;
+}
+
+void MoveBullets(World_t *MyWorld)
+{
+	int i, j;
+	struct UpdateBullet *Bullets;
+	Bullets = MyWorld->Bullets;
+	for (i=0;i<MyWorld->bulletCountMax;i++)
+	{
+		if (Bullets[i].x != -1 || Bullets[i].y != -1)
+			for (j=0;j<MyWorld->bulletSpeed;j++)
+			{	
+				if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
+					[Bullets[i].y+gety(Bullets[i].direction)] != NULL)
+				{
+					if (((WorldCell_t  *)MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
+						[Bullets[i].y+gety(Bullets[i].direction)])->type == BULLET)
+					{
+						
+					}
+					else
+					if (((WorldCell_t  *)MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
+						[Bullets[i].y+gety(Bullets[i].direction)])->type == TAIL)
+					{
+	
+					}
+					else
+					if (((WorldCell_t  *)MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
+						[Bullets[i].y+gety(Bullets[i].direction)])->type == HEAD)
+					{
+
+					}
+				}
+				else
+				{
+					Bullets[i].x+=getx(Bullets[i].direction);
+					Bullets[i].y+=gety(Bullets[i].direction);
+				}
+			}
+	}	
+}
+
+void DeletePlayer(World_t *MyWorld, int ID)
+{
+	int i;
+	struct UpdatePlayer *DelPlayer;
+	DelPlayer = getSelf(MyWorld);
+	for (i=0;i<MyWorld->playerCountMax;i++)
+	{
+		if (DelPlayer[i].id == ID)
+		{
+			DelPlayer[i].gameover=1;
+			free(MyWorld->Field[DelPlayer[i].x][DelPlayer[i].y]);
+			MyWorld->Field[DelPlayer[i].x][DelPlayer[i].y] = NULL;
+			break;
+		}
+	}
+}
+
+void MovePlayers(World_t *MyWorld)
+{
+	struct UpdatePlayer *CurPlayers;
+	CurPlayers = getSelf(MyWorld);
+	int i;
+	for (i=0;i<MyWorld->playerCountMax;i++)
+	{
+		if (CurPlayers[i].gameover == 0)
+		{
+			if (MyWorld->Field[CurPlayers[i].x+getx(CurPlayers[i].direction)][CurPlayers[i].y+gety(CurPlayers[i].direction)] == NULL)
+			{
+				CurPlayers[i].x+=getx(CurPlayers[i].direction);
+				CurPlayers[i].y+=gety(CurPlayers[i].direction);
+			}
+			else
+			{
+				DeletePlayer(MyWorld, CurPlayers[i].id);
+			}
+		}
+	}	
+}
+
 #if 0
 void CreateServerWorld(World *someWorld)
 {

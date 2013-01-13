@@ -10,7 +10,7 @@ server:
 	gcc server.c -o ./build/server.bin -lpthread -lcurses
 
 clean:
-	rm -rf *.o server.bin client.bin
+	rm -rf *.o  ./build/server.bin ./build/client.bin
 
-clean_all:
-	rm -rf *.out *.o *~  server.bin client.bin
+clean_all: clean
+	rm -rf *.out *~ 

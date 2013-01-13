@@ -9,7 +9,6 @@
 #include <sys/types.h>
 #include <time.h>
 #include <pthread.h>
-#include <libconfig.h>
 
 #include "logger.h"
 #include "packets.h"

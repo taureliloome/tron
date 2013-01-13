@@ -8,7 +8,7 @@
 #define MAX_LENGTH   1000
 #define B_BIKE      'X'
 #define B_BIKE_HEAD 'O'
-#define LENGHT_LIMIT 10
+#define LENGHT_LIMIT 1000
 #define BULLET_SPEED 2
 #define BULLET_CD 20
  
@@ -53,7 +53,7 @@ int main(void)
 
 
     sleep_time.tv_sec  = 0;
-    sleep_time.tv_nsec = 450000000;
+    sleep_time.tv_nsec = 45000000;
      
     init_game();
      

@@ -33,6 +33,7 @@ static World_t *MyWorld;
 
 int main(int argc, char *argv[])
 {
+	setOutputType(stderr);
 	setLogLevel(LOG_LEVEL_ALL);
     int listenfd = 0, playerCount = 5;
 

@@ -14,11 +14,16 @@
 #include "packets.h"
 #include "socket_if.h"
 #include "Graphics.h"
+
 static	World_t game;
 int main(int argc, char *argv[])
 {
 	FILE *fd = fopen("debug.out", "rw+");
-	setOutputType(fd);
+	if ( fd != NULL )
+		setOutputType(fd);
+	else
+		setOutputType(stderr);
+
 	setLogLevel(LOG_LEVEL_ALL);
 
 	uint8_t keep_alive = 1;
@@ -32,12 +37,12 @@ int main(int argc, char *argv[])
 
 	memset(recvBuff, '0',sizeof(recvBuff));
 
-/*
+
 	if(argc != 3)
 	{
 		printf("\n Usage: %s <ip of server> <port of server>\n",argv[0]);
 		return 1;
-	}*/
+	}
 
 	init_game();
 #ifdef SERVER_ACTIVE
@@ -87,10 +92,13 @@ int main(int argc, char *argv[])
 					//TODO pass c to world
 					//TODO send
 #ifdef SERVER_ACTIVE
-					event.direction=(getSelf(&game)).direction;
+					event.direction = (getSelf(&game))->direction;
 					if ( c == ' ')
 						event.shot = 1;
+					else
+						event.shot = 0;
 					SendMessage(sockfd, &event, sizeof(event), PCKT_EVENT);
+					DEBUG("Sending update event { %d, %d } to server \n", event.direction, event.shot );
 #endif
 				}
 		    }
@@ -100,7 +108,9 @@ int main(int argc, char *argv[])
 			//TODO: replace int a with proper EVENT structure!!!
 		}
 	}
-	fclose(fd);
+	NOTICE("Disconnected from server\n");
+	if (fd != NULL)
+		fclose(fd);
 	terminate_game();
 	return 0;
 }

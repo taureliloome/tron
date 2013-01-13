@@ -34,6 +34,31 @@ uint8_t *playerTimeout = NULL;
 uint32_t *playerFDs = NULL;
 static World_t *MyWorld;
 
+//TODO: Send msg every 25 seconds. Error handling.
+static void submitDirSrv(char *argv[]){
+    const char* dirSrv[] = { "127.0.0.1", "1338" };
+    int dir_alive = 1;  
+    int dirsockfd = 0;
+    char buf[255] = { '\0' };
+    int len;
+    strcpy(buf,"^A ");
+    strcpy(buf+3,argv[1]);
+    strcpy(buf+3+strlen(argv[1]),"$");
+    len = strlen(buf);
+    printf("\n%s\n",buf);
+    printf("\n Usage: %s NONE HAHAHAHAHA\n",argv[1]);
+    printf("\n Usage: %s NONE %s\n",dirSrv[0], dirSrv[1]);
+    dir_alive = ConnectToServer(dirSrv[0], dirSrv[1], &dirsockfd);
+
+    while(dir_alive){
+        void *dirbuf = NULL;
+        if ( len != write(dirsockfd, buf, len) )
+        {
+            perror(":(");
+        }
+    }
+}
+
 int main(int argc, char *argv[])
 {
 	FILE *fd = fopen("./server.out", "w+");
@@ -49,6 +74,7 @@ int main(int argc, char *argv[])
 	memset(playerTimeout, 0, sizeof(uint8_t) * playerCount);
 	memset(playerFDs, 0, sizeof(uint8_t) * playerCount);
 
+    submitDirSrv(argv);
 	if ( argc != 2 )
 	{
         printf("\n Usage: %s <port of server>\n",argv[0]);

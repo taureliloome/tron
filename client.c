@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <libconfig.h>
 
 #include "logger.h"
 #include "packets.h"

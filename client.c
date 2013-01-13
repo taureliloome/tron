@@ -18,7 +18,7 @@
 static	World_t game;
 int main(int argc, char *argv[])
 {
-	FILE *fd = fopen("debug.out", "rw+");
+	FILE *fd = fopen("./client.out", "w+");
 	if ( fd != NULL )
 		setOutputType(fd);
 	else
@@ -88,11 +88,11 @@ int main(int argc, char *argv[])
 			{
 				init_game();
 				c = wgetch(key_detecter); 
-				if ( c != ERR ) {
+				//if ( c != ERR ) {
 					//TODO pass c to world
 					//TODO send
 #ifdef SERVER_ACTIVE
-					event.direction = (getSelf(&game))->direction;
+					event.direction = DIR_UP;// (getSelf(&game))->direction;
 					if ( c == ' ')
 						event.shot = 1;
 					else
@@ -100,12 +100,11 @@ int main(int argc, char *argv[])
 					SendMessage(sockfd, &event, sizeof(event), PCKT_EVENT);
 					DEBUG("Sending update event { %d, %d } to server \n", event.direction, event.shot );
 #endif
-				}
+				//}
 		    }
 
 			drawWorld(&game);			
 			refresh();
-			//TODO: replace int a with proper EVENT structure!!!
 		}
 	}
 	NOTICE("Disconnected from server\n");

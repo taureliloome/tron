@@ -17,6 +17,7 @@
 
 static void* clientHandler(void *fd);
 static void waitForPlayers(int reqClientCount, int listenfd);
+static int getPlayerIdFromConnFd(uint8_t connfd);
 
 pthread_t accept_thread;
 pthread_t derive_thread;
@@ -29,13 +30,24 @@ typedef enum {
 } game_state_t;
 
 static uint8_t game_state = GS_STARTUP;
+uint8_t *playerTimeout = NULL;
+uint32_t *playerFDs = NULL;
 static World_t *MyWorld;
 
 int main(int argc, char *argv[])
 {
-	setOutputType(stderr);
+	FILE *fd = fopen("./server.out", "w+");
+	if ( fd )
+		setOutputType(fd);
+	else
+		setOutputType(stderr);
+
 	setLogLevel(LOG_LEVEL_ALL);
     int listenfd = 0, playerCount = 5;
+	playerTimeout = malloc(sizeof(uint8_t) * playerCount);
+	playerFDs = malloc(sizeof(uint8_t) * playerCount);
+	memset(playerTimeout, 0, sizeof(uint8_t) * playerCount);
+	memset(playerFDs, 0, sizeof(uint8_t) * playerCount);
 
 	if ( argc != 2 )
 	{
@@ -47,6 +59,8 @@ int main(int argc, char *argv[])
 	waitForPlayers(playerCount, listenfd);
 
 	close(listenfd);
+	free(playerTimeout);
+	free(playerFDs);
 	return 0;
 }
 
@@ -56,6 +70,7 @@ static void waitForPlayers(int reqClientCount, int listenfd)
     while(getClientCount() < reqClientCount)
     {
 		connfd = ServerAcceptClient(&listenfd);
+		playerFDs[getClientCount()-1] = connfd;
 
 		if ( connfd ) {
 			NOTICE("<SERVER> New player connected\n");
@@ -71,14 +86,15 @@ static void waitForPlayers(int reqClientCount, int listenfd)
 static void* clientHandler(void *fd)
 {
 	int connfd = *(int *)fd;
-	uint8_t msg_type = 0, timeout = 0;
+	uint32_t playerId = getPlayerIdFromConnFd(connfd);
+	uint8_t msg_type = 0;
 	int a = 5639, i = 0;
 	SendMessage(connfd, &a, sizeof(a), PCKT_CONNECTION_RESPONSE);
 	while(1) {
 		//TODO update message has to be sent here, replace a with require function
 		SendMessage(connfd, &a, sizeof(a), PCKT_UPDATE);
-		RecieveMessage(connfd, &msg_type, &timeout);
-		if ( timeout >= 5 )
+		RecieveMessage(connfd, &msg_type, &playerTimeout[playerId]);
+		if ( playerTimeout[playerId] >= 5 )
 		{
 			NOTICE("<SERVER> Dropping player %d due to timeout\n", connfd);
 			break;
@@ -87,10 +103,7 @@ static void* clientHandler(void *fd)
 		{
 			DEBUG("<SERVER> Received data from player %d\n", connfd);
 			if ( getClientCount() == 5 ) { 
-				decrClientCount(); 
-				decrClientCount(); 
-				decrClientCount(); 
-				decrClientCount();
+				break;
 			}
 		}
 		//TODO update local structs with received data.
@@ -98,3 +111,13 @@ static void* clientHandler(void *fd)
     close(connfd);
 }
 
+static int getPlayerIdFromConnFd(uint8_t connfd)
+{
+	int id;
+	for ( id = 0; id < getClientCount(); id++ )
+	{
+		if ( playerFDs[id] == connfd )
+			return id;
+	}
+	return -1;
+}

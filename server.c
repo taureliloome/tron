@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
 	memset(playerTimeout, 0, sizeof(uint8_t) * playerCount);
 	memset(playerFDs, 0, sizeof(uint8_t) * playerCount);
 
+    //TODO: Put this function in right place
     submitDirSrv(argv);
 	if ( argc != 2 )
 	{

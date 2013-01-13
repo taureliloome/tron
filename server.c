@@ -32,7 +32,7 @@ typedef enum {
 static uint8_t game_state = GS_STARTUP;
 uint8_t *playerTimeout = NULL;
 uint32_t *playerFDs = NULL;
-static World_t *MyWorld;
+static World_t MyWorld;
 
 int main(int argc, char *argv[])
 {
@@ -89,11 +89,14 @@ static void* clientHandler(void *fd)
 	uint32_t playerId = getPlayerIdFromConnFd(connfd);
 	uint8_t msg_type = 0;
 	int a = 5639, i = 0;
+	void *upd_pkt;
+	size_t upd_pkt_len = 0;
 	SendMessage(connfd, &a, sizeof(a), PCKT_CONNECTION_RESPONSE);
 	while(1) {
-		//TODO update message has to be sent here, replace a with require function
-		SendMessage(connfd, &a, sizeof(a), PCKT_UPDATE);
 		RecieveMessage(connfd, &msg_type, &playerTimeout[playerId]);
+
+		upd_pkt = getUpdateMessage(MyWorld, &upd_pkt_len);
+		SendMessage(connfd, upd_pkt, upd_pkt_len, PCKT_UPDATE);
 		if ( playerTimeout[playerId] >= 5 )
 		{
 			NOTICE("<SERVER> Dropping player %d due to timeout\n", connfd);
@@ -102,7 +105,7 @@ static void* clientHandler(void *fd)
 		if ( msg_type == PCKT_EVENT )
 		{
 			DEBUG("<SERVER> Received data from player %d\n", connfd);
-			if ( getClientCount() == 5 ) { 
+			if ( getClientCount() == 5 ) {
 				break;
 			}
 		}

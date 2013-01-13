@@ -54,21 +54,18 @@ uint8_t ConnectToServer(const char *ip, const char *port, int *sockfd)
 	if((*sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
 		ERROR("Could not create socket: \n");
-		perror("");
 		return 0;
 	}
 
 	if(inet_pton(AF_INET, ip, &serv_addr.sin_addr)<=0)
 	{
 		ERROR("inet_pton error occured\n");
-		perror("");
 		return 0;
 	}
 
 	if( connect(*sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
 	{
 		ERROR("Connect Failed \n");
-		perror("");
 		return 0;
 	}
 	NOTICE("Connected to server\n");

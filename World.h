@@ -53,7 +53,7 @@ typedef struct World {
 
 struct UpdatePlayer* getSelf(World_t *MyWorld)
 {
-	return &MyWorld->Players[0];	
+	return MyWorld->Players;
 }
 #if 0
 void CreateServerWorld(World *someWorld)

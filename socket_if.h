@@ -149,7 +149,7 @@ uint8_t SendMessage(int sendfd, void * buf, size_t len, uint8_t msg_type)
 void *RecieveMessage(int readfd, uint8_t *msg_type, uint8_t *timeout)
 {
 	struct Header msg_hdr;
-	size_t received = 0;	
+	uint32_t received = 0;	
 	struct timeval m_timeout;
 	m_timeout.tv_sec = 0;
 	m_timeout.tv_usec = 10000;
@@ -184,7 +184,7 @@ void *RecieveMessage(int readfd, uint8_t *msg_type, uint8_t *timeout)
 	while ( received != msg_hdr.length )
 	{
 		received += read(readfd, buf + received, sizeof(msg_hdr.length) - received );
-		DEBUG("%d/%d\n", received, msg_hdr.length);
+		DEBUG("%u/%u\n", received, msg_hdr.length);
 	}
 	return buf;	
 }

@@ -36,6 +36,7 @@ static World_t *MyWorld;
 
 //TODO: Send msg every 25 seconds. Error handling.
 static void submitDirSrv(char *argv[]){
+    // IP and PORT for Directory server
     const char* dirSrv[] = { "127.0.0.1", "1338" };
     int dir_alive = 1;  
     int dirsockfd = 0;
@@ -45,9 +46,7 @@ static void submitDirSrv(char *argv[]){
     strcpy(buf+3,argv[1]);
     strcpy(buf+3+strlen(argv[1]),"$");
     len = strlen(buf);
-    printf("\n%s\n",buf);
-    printf("\n Usage: %s NONE HAHAHAHAHA\n",argv[1]);
-    printf("\n Usage: %s NONE %s\n",dirSrv[0], dirSrv[1]);
+    //printf("\n%s\n",buf); // debug of data buffer
     dir_alive = ConnectToServer(dirSrv[0], dirSrv[1], &dirsockfd);
 
     while(dir_alive){

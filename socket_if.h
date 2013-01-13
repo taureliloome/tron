@@ -1,6 +1,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
 #include "logger.h"
 
@@ -52,21 +53,25 @@ uint8_t ConnectToServer(const char *ip, const char *port, int *sockfd)
 
 	if((*sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
-		ERROR("\n Error : Could not create socket \n");
+		ERROR("Could not create socket: \n");
+		perror("");
 		return 0;
 	}
 
 	if(inet_pton(AF_INET, ip, &serv_addr.sin_addr)<=0)
 	{
-		ERROR("\n inet_pton error occured\n");
+		ERROR("inet_pton error occured\n");
+		perror("");
 		return 0;
 	}
 
 	if( connect(*sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
 	{
-		ERROR("\n Error : Connect Failed \n");
+		ERROR("Connect Failed \n");
+		perror("");
 		return 0;
 	}
+	NOTICE("Connected to server\n");
 	return 1;
 }
 
@@ -94,7 +99,7 @@ uint8_t CreateListenSocket(const char *port, int *listenfd)
 		ERROR("Unable to bind to the listen socket: ");
 		return 0;
 	}
-	NOTICE("Server started on with given port:%s", port);
+	NOTICE("Server started on with given port: %s\n", port);
 	return 1;
 }
 
@@ -109,9 +114,10 @@ int ServerAcceptClient(int * listenfd)
 	if ( connfd )
 	{
 		incrClientCount();
+		DEBUG("Accepted client number: %d, connfd: %d \n", getClientCount(),  connfd);
 		return connfd;
 	}
-	perror("unable to accept a connection");
+	perror("Unable to accept a connection");
 	return 0;
 }
 
@@ -133,7 +139,7 @@ uint8_t SendMessage(int sendfd, void * buf, size_t len, uint8_t msg_type)
 		perror("Unable to send msg header");
 		return 0;
 	}
-	if ( sizeof(len) != write(sendfd, buf, len) )
+	if ( len != write(sendfd, buf, len) )
 	{
 		perror("Unable to send msg");
 		return 0;
@@ -165,12 +171,11 @@ void *RecieveMessage(int readfd, uint8_t *msg_type, uint8_t *timeout)
 
 	if ( res == 0 ){
 		*timeout++;
-		ERROR("Timed out, retry %d\n", *timeout);
+		DEBUG2("Timed out, retry %d\n", *timeout);
 		return NULL;
 	}
 	else if ( res == -1 ) {
 		ERROR("Error in select:");
-		perror("");
 		return NULL;
 	}
 	*timeout = 0;
@@ -180,7 +185,7 @@ void *RecieveMessage(int readfd, uint8_t *msg_type, uint8_t *timeout)
 	}
 	msg_hdr.length = ntohl(msg_hdr.length);
 	*msg_type = msg_hdr.type;
-	DEBUG("received message type: %d, len: %d\n", msg_hdr.type, msg_hdr.length );
+	DEBUG("Received message type: %d, len: %d\n", msg_hdr.type, msg_hdr.length );
 
 	received = 0;
 	void * buf = malloc(msg_hdr.length);

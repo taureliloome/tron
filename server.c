@@ -10,10 +10,12 @@
 #include <time.h>
 #include <pthread.h>
 
+#include "idgen.h"
 #include "logger.h"
 #include "packets.h"
 #include "socket_if.h"
 #include "Graphics.h"
+
 
 static void* clientHandler(void *fd);
 static void waitForPlayers(int reqClientCount, int listenfd);
@@ -79,6 +81,13 @@ static void waitForPlayers(int reqClientCount, int listenfd)
 
 		if ( connfd ) {
 			NOTICE("<SERVER> New player connected\n");
+
+            /* PlayerID generation TODO: */
+            int newId;
+            newId = idGen(connfd, reqClientCount, idInit(reqClientCount));
+            printf("newID is ---- %d\n", newId);
+            /* --------- */
+
 			uint8_t client_count = getClientCount();
 			pthread_create(&derive_thread, 0, &clientHandler, (void*)&connfd );
 			pthread_detach(derive_thread);

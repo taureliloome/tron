@@ -549,7 +549,6 @@ void MoveBullets(World_t *MyWorld)
 			{	
 /*
 				if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
-<<<<<<< Updated upstream
 					[Bullets[i].y+gety(Bullets[i].direction)].type != EMPTY)
 				{
 					if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
@@ -567,19 +566,7 @@ void MoveBullets(World_t *MyWorld)
 					if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
 						[Bullets[i].y+gety(Bullets[i].direction)].type == HEAD)
 					{
-					}	
-=======
-<<<<<<< Updated upstream
-					[Bullets[i].y+gety(Bullets[i].direction)]).type == BULLET)
-				{
-				
-				}
-				else
-				if ((MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
-					[Bullets[i].y+gety(Bullets[i].direction)]).type == TAIL)
-				{
-
->>>>>>> Stashed changes
+					}
 
 				}
 				else

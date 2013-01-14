@@ -19,7 +19,7 @@ static void* clientHandler(void *fd);
 static void waitForPlayers(int reqClientCount, int listenfd);
 static int getPlayerIdFromConnFd(uint8_t connfd);
 
-pthread_t accept_thread;
+pthread_t accept_thread; 
 pthread_t derive_thread;
 
 typedef enum {
@@ -100,7 +100,9 @@ static void* clientHandler(void *fd)
 	while(1) {
 		RecieveMessage(connfd, &msg_type, &playerTimeout[playerId]);
 
+
 		upd_pkt = getUpdateMessage(&ServerWorld, &upd_pkt_len);
+
 		SendMessage(connfd, upd_pkt, upd_pkt_len, PCKT_UPDATE);
 		if ( playerTimeout[playerId] >= 5 )
 		{

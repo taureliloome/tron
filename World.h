@@ -38,6 +38,8 @@ typedef struct Tail{
 
 typedef struct World {
 	WorldCell_t Field[24][80];	/* Divdimensiju masivs ar noradem uz objektu kurš aizņem konkrētu šunu. */
+
+
 	void *Players;		/* Visu spēlētāju objektu pūls. Satur koordinātes, virzienu utl. */
 	void *Bullets;		/* Visu iespējamo ložu pūls. */
 
@@ -255,9 +257,12 @@ void * getUpdateMessage(World_t *someWorld, size_t *length)
 	return packet;
 }
 
+/* Creates world on client Side */
+
 void CreateClientWorld(World_t *someWorld,struct ConnectionResponse * Params)
 {
 	int k,i;
+	WorldCell_t tempCell;
 	someWorld->height=Params->height;
 	someWorld->width=Params->width;
 // WARNING SHIT CODED 2d ARRAY REFACTOR NAHOOOJ
@@ -269,6 +274,23 @@ void CreateClientWorld(World_t *someWorld,struct ConnectionResponse * Params)
 	//	memset(someWorld->Field[k], 0, sizeof(struct WorldCell*));
    // }
 	someWorld->Players = (upd_player_t*)malloc(someWorld->playerCountMax * sizeof(upd_player_t));
+
+//	someWorld->Field = malloc(Params->width * Params->height * sizeof(void**));
+//
+//   	for (k = 0; k < Params->width; k++) 
+//  	{
+//		someWorld->Field[k] = malloc(Params->height * sizeof(void*));
+//		for(i = 0; i < Params->height; i++)
+//		{
+//			tempCell = someWorld->Field[k][i];
+//			tempCell.x = k;
+//			tempCell.y = i;
+//		}
+//		
+//    	}
+//
+//	someWorld->Players = (struct UpdatePlayer*)malloc(someWorld->playerCountMax * sizeof(struct UpdatePlayer));
+
 //	for (i = 0; i < Params->width; i++)
 //		for ( k = 0; k < Params->height; k++)
 //		{
@@ -279,8 +301,6 @@ void CreateClientWorld(World_t *someWorld,struct ConnectionResponse * Params)
 //			((WorldCell_t *)someWorld->Field[i][k])->dir = dir;
 //		}
 }
-
-//voit InitField
 
 void ClientMove(int c, World_t *MyWorld)
 {
@@ -340,6 +360,7 @@ void MoveBullets(World_t *MyWorld)
 			{	
 /*
 				if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
+<<<<<<< Updated upstream
 					[Bullets[i].y+gety(Bullets[i].direction)]).type == BULLET)
 				{
 				
@@ -348,6 +369,25 @@ void MoveBullets(World_t *MyWorld)
 				if ((MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
 					[Bullets[i].y+gety(Bullets[i].direction)]).type == TAIL)
 				{
+=======
+					[Bullets[i].y+gety(Bullets[i].direction)].type != EMPTY)
+				{
+					if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
+						[Bullets[i].y+gety(Bullets[i].direction)].type == BULLET)
+					{
+						
+					}
+					else
+					if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
+						[Bullets[i].y+gety(Bullets[i].direction)].type == TAIL)
+					{
+	
+					}
+					else
+					if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
+						[Bullets[i].y+gety(Bullets[i].direction)].type == HEAD)
+					{
+>>>>>>> Stashed changes
 
 				}
 				else
@@ -371,8 +411,12 @@ void DeletePlayer(World_t *MyWorld, int ID)
 		if (DelPlayer[i].id == ID)
 		{
 			DelPlayer[i].gameover=1;
+
 			//free(MyWorld->Field[DelPlayer[i].x][DelPlayer[i].y]);
 			//MyWorld->Field[DelPlayer[i].x][DelPlayer[i].y] = NULL;
+
+			MyWorld->Field[DelPlayer[i].x][DelPlayer[i].y].type=EMPTY;
+
 			break;
 		}
 	}
@@ -387,8 +431,9 @@ void MovePlayers(World_t *MyWorld)
 	{
 		if (CurPlayers[i].gameover == 0)
 		{
-/*
-			if (MyWorld->Field[CurPlayers[i].x+getx(CurPlayers[i].direction)][CurPlayers[i].y+gety(CurPlayers[i].direction)] == NULL)
+
+			if (MyWorld->Field[CurPlayers[i].x+getx(CurPlayers[i].direction)][CurPlayers[i].y+gety(CurPlayers[i].direction)].type == EMPTY)
+
 			{
 				CurPlayers[i].x+=getx(CurPlayers[i].direction);
 				CurPlayers[i].y+=gety(CurPlayers[i].direction);
@@ -397,7 +442,7 @@ void MovePlayers(World_t *MyWorld)
 			{
 				DeletePlayer(MyWorld, CurPlayers[i].id);
 			}
-*/
+
 		}
 	}	
 }

@@ -4,6 +4,7 @@
 #include <ncurses.h>
 #include "World.h"
 #include <stdio.h>
+#include "logger.h"
 
 #define WIDTH        80
 #define HEIGHT       24
@@ -20,8 +21,8 @@ static struct timespec sleep_time;
 void init_game(void)
 {
     initscr();
-    noecho();
-    curs_set(0);
+   // noecho();
+   // curs_set(0);
 	key_detecter = newwin(HEIGHT, WIDTH, 0, 0);
     nodelay(key_detecter, TRUE);
 };
@@ -44,12 +45,15 @@ void drawWorld(World_t *MyWorld) {
 				printf("x: %d,y:%d, type: %d",x,y,tempCell.type);
 				switch ( tempCell.type ) {
 					case 0: /* player */
+						NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);
 						mvaddch(x,y,DRAW_BIKE);
 						break;
 					case 1: /* bullet */
+						NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);
 						mvaddch(x,y,DRAW_BULT);
 						break;
 					case 2: /* tail */
+						NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);
 						mvaddch(x,y,DRAW_TAIL);
 						break;
 				}

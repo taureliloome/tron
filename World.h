@@ -251,6 +251,7 @@ void * getUpdateMessage(World_t *someWorld, size_t *length)
 void CreateClientWorld(World_t *someWorld,conn_resp_t * Params)
 {
 	int k,i;
+	WorldCell_t tempCell;
 	someWorld->settings.height=Params->height;
 	someWorld->settings.width=Params->width;
 // WARNING SHIT CODED 2d ARRAY REFACTOR NAHOOOJ
@@ -272,8 +273,6 @@ void CreateClientWorld(World_t *someWorld,conn_resp_t * Params)
 //			((WorldCell_t *)someWorld->Field[i][k])->dir = dir;
 //		}
 }
-
-//voit InitField
 
 void ClientMove(int c, World_t *MyWorld)
 {
@@ -333,14 +332,24 @@ void MoveBullets(World_t *MyWorld)
 			{	
 /*
 				if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
-					[Bullets[i].y+gety(Bullets[i].direction)]).type == BULLET)
+					[Bullets[i].y+gety(Bullets[i].direction)].type != EMPTY)
 				{
-				
-				}
-				else
-				if ((MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
-					[Bullets[i].y+gety(Bullets[i].direction)]).type == TAIL)
-				{
+					if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
+						[Bullets[i].y+gety(Bullets[i].direction)].type == BULLET)
+					{
+						
+					}
+					else
+					if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
+						[Bullets[i].y+gety(Bullets[i].direction)].type == TAIL)
+					{
+	
+					}
+					else
+					if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
+						[Bullets[i].y+gety(Bullets[i].direction)].type == HEAD)
+					{
+					}	
 
 				}
 				else
@@ -364,8 +373,12 @@ void DeletePlayer(World_t *MyWorld, int ID)
 		if (DelPlayer[i].id == ID)
 		{
 			DelPlayer[i].gameover=1;
+
 			//free(MyWorld->Field[DelPlayer[i].x][DelPlayer[i].y]);
 			//MyWorld->Field[DelPlayer[i].x][DelPlayer[i].y] = NULL;
+
+			MyWorld->Field[DelPlayer[i].x][DelPlayer[i].y].type=EMPTY;
+
 			break;
 		}
 	}
@@ -380,8 +393,9 @@ void MovePlayers(World_t *MyWorld)
 	{
 		if (CurPlayers[i].gameover == 0)
 		{
-/*
-			if (MyWorld->Field[CurPlayers[i].x+getx(CurPlayers[i].direction)][CurPlayers[i].y+gety(CurPlayers[i].direction)] == NULL)
+
+			if (MyWorld->Field[CurPlayers[i].x+getx(CurPlayers[i].direction)][CurPlayers[i].y+gety(CurPlayers[i].direction)].type == EMPTY)
+
 			{
 				CurPlayers[i].x+=getx(CurPlayers[i].direction);
 				CurPlayers[i].y+=gety(CurPlayers[i].direction);
@@ -390,7 +404,7 @@ void MovePlayers(World_t *MyWorld)
 			{
 				DeletePlayer(MyWorld, CurPlayers[i].id);
 			}
-*/
+
 		}
 	}	
 }

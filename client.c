@@ -45,16 +45,12 @@ int main(int argc, char *argv[])
 	}
 
 	init_game();
-#ifdef SERVER_ACTIVE
 	keep_alive = ConnectToServer(argv[1], argv[2], &sockfd);
-#endif
 	while (keep_alive)
 	{
 		
 		void *buf = NULL;
-#ifdef SERVER_ACTIVE
 		buf = RecieveMessage(sockfd, &msg_type, &timeout);
-#endif
 		if ( timeout == 5 ) {
 			keep_alive = 0;
 			ERROR("Connection to server timed out\n");
@@ -63,8 +59,7 @@ int main(int argc, char *argv[])
 				switch(msg_type) {
 					case 2:
 						/* Player just connected to server;
-							Message contains servers rules;
-						*/
+							Message contains servers rules; */
 						NOTICE("Connected to server, please stand by\n");
 						CreateClientWorld(&game, buf);
 						break;
@@ -81,9 +76,6 @@ int main(int argc, char *argv[])
 				}
 				free(buf);
 			}
-#ifndef SERVER_ACTIVE
-			gameStarted = 1;
-#endif
 			if (gameStarted)
 			{
 				init_game();
@@ -93,7 +85,6 @@ int main(int argc, char *argv[])
 					ClientMove(c, &game);//TODO pass c to world-done
 				}
 				
-#ifdef SERVER_ACTIVE
 				event.direction = (getSelf(&game))->direction;
 				if ( c == ' ')
 					event.shot = 1;
@@ -102,10 +93,6 @@ int main(int argc, char *argv[])
 				SendMessage(sockfd, &event, sizeof(event), PCKT_EVENT);
 
 				DEBUG("Sending update event { %d, %d } to server \n", event.direction, event.shot );
-#endif
-				
-				
-
 		    }
 			
 			drawWorld(&game);			

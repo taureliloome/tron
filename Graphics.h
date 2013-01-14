@@ -37,8 +37,8 @@ void drawWorld(World_t *MyWorld) {
 	uint32_t x, y;
 	WorldCell_t tempCell;
 	//TODO add borders PLEASE!
-	for ( x = 0; x < MyWorld->width; x++ ) {
-		for ( y = 0; y < MyWorld->height; y++ ) {
+	for ( x = 0; x < MyWorld->settings.width; x++ ) {
+		for ( y = 0; y < MyWorld->settings.height; y++ ) {
 			tempCell = MyWorld->Field[x][y];
 			if ( tempCell.type != EMPTY ) {
 				printf("x: %d,y:%d, type: %d",x,y,tempCell.type);

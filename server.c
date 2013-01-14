@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 
     CreateListenSocket(argv[1], &listenfd);
 	
-	waitForPlayers(ServerWorld.playerCountMax, listenfd);
+	waitForPlayers(ServerWorld.settings.playerCount, listenfd);
 
 	close(listenfd);
 	free(playerTimeout);
@@ -91,18 +91,23 @@ static void waitForPlayers(int reqClientCount, int listenfd)
 static void* clientHandler(void *fd)
 {
 	int connfd = *(int *)fd;
-	uint32_t playerId = 0; //getPlayerIdFromConnFd(connfd);
 	uint8_t msg_type = 0;
 	int a = 5639, i = 0;
 	void *upd_pkt;
 	size_t upd_pkt_len = 0;
-	SendMessage(connfd, &a, sizeof(a), PCKT_CONNECTION_RESPONSE);
+
+	//Aizsutam saktonejo informaciju par servera iestatijumiem.
+	conn_resp_t conn_resp = { 0 };
+	memcpy(&conn_resp, &ServerWorld.settings, sizeof(conn_resp_t) );
+	SendMessage(connfd, &conn_resp, sizeof(conn_resp), PCKT_CONNECTION_RESPONSE);
+	conn_resp.id = 0; //getPlayerIdFromConnFd(connfd);
+
 	while(1) {
-		RecieveMessage(connfd, &msg_type, &playerTimeout[playerId]);
+		RecieveMessage(connfd, &msg_type, &playerTimeout[conn_resp.id]);
 
 		upd_pkt = getUpdateMessage(&ServerWorld, &upd_pkt_len);
 		SendMessage(connfd, upd_pkt, upd_pkt_len, PCKT_UPDATE);
-		if ( playerTimeout[playerId] >= 5 )
+		if ( playerTimeout[conn_resp.id] >= 5 )
 		{
 			NOTICE("<SERVER> Dropping player %d due to timeout\n", connfd);
 			break;

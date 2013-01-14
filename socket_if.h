@@ -141,6 +141,7 @@ uint8_t SendMessage(int sendfd, void * buf, size_t len, uint8_t msg_type)
 		perror("Unable to send msg");
 		return 0;
 	}
+	NOTICE("Message sent type: %u; len:%u\n",msg_type, (uint32_t) len);
 	return 1;
 }
 
@@ -181,13 +182,13 @@ void *RecieveMessage(int readfd, uint8_t *msg_type, uint8_t *timeout)
 	}
 	msg_hdr.length = ntohl(msg_hdr.length);
 	*msg_type = msg_hdr.type;
-	DEBUG("Received message type: %d, len: %d\n", msg_hdr.type, msg_hdr.length );
+	DEBUG("Received message header type: %d, len: %d\n", msg_hdr.type, msg_hdr.length );
 
 	received = 0;
 	void * buf = malloc(msg_hdr.length);
 	while ( received != msg_hdr.length )
 	{
-		received += read(readfd, buf + received, sizeof(msg_hdr.length) - received );
+		received += read(readfd, buf + received, msg_hdr.length - received );
 		DEBUG("%u/%u\n", received, msg_hdr.length);
 	}
 	return buf;	

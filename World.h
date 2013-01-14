@@ -37,21 +37,14 @@ typedef struct Tail{
 }Tail_t;
 
 typedef struct World {
-	WorldCell_t Field[24][80];	/* Divdimensiju masivs ar noradem uz objektu kurš aizņem konkrētu šunu. */
+	WorldCell_t Field[80][24];	/* Divdimensiju masivs ar noradem uz objektu kurš aizņem konkrētu šunu. */
 	void *Players;		/* Visu spēlētāju objektu pūls. Satur koordinātes, virzienu utl. */
 	void *Bullets;		/* Visu iespējamo ložu pūls. */
 
 	Tail_t *Tails;		/* Spēlētāju astes */
 
 	/* Pasaules configurācija */
-   	uint32_t height;    
-    	uint32_t width;
-	uint32_t timeout;
-	uint32_t frameRate;
-	uint32_t bulletSpeed;
-	uint32_t bulletCoolDown;
-	uint32_t playerCountMax;
-	uint32_t tailLengthMax;
+	conn_resp_t settings;
 
 	uint32_t bulletCountMax;
 	uint32_t bulletCountAlive;
@@ -69,27 +62,27 @@ void init_world(World_t *someWorld)
 	int bulletMultiplier = 0, maxSide = 0, x = 0, y = 0;
 	
 //TODO: remove hardcoded params
-	someWorld->height = 24;    
-    	someWorld->width = 80;
+	someWorld->settings.height = 24;    
+    	someWorld->settings.width = 80;
 
-	if (someWorld->height >= someWorld->width)
-		maxSide = someWorld->height;
+	if (someWorld->settings.height >= someWorld->settings.width)
+		maxSide = someWorld->settings.height;
 	else
-		maxSide = someWorld->width;
+		maxSide = someWorld->settings.width;
 
 	/* Pasaules konfigurācija */
 
-	someWorld->timeout = 100;
-	someWorld->frameRate = 2;
-	someWorld->bulletSpeed = 4;
-	someWorld->bulletCoolDown = 3;
-	someWorld->playerCountMax = 4;
-	someWorld->tailLengthMax = 10;
-	bulletMultiplier = maxSide / (someWorld->bulletCoolDown * someWorld->bulletSpeed);
-	if (maxSide % (someWorld->bulletCoolDown * someWorld->bulletSpeed)>0)
+	someWorld->settings.timeout = 100;
+	someWorld->settings.frameRate = 2;
+	someWorld->settings.bulletSpeed = 4;
+	someWorld->settings.bulletCooldown = 3;
+	someWorld->settings.playerCount = 1;
+	someWorld->settings.tailLength = 10;
+	bulletMultiplier = maxSide / (someWorld->settings.bulletCooldown * someWorld->settings.bulletSpeed);
+	if (maxSide % (someWorld->settings.bulletCooldown * someWorld->settings.bulletSpeed)>0)
 		bulletMultiplier++;
 
-	someWorld->bulletCountMax = bulletMultiplier * someWorld->playerCountMax;
+	someWorld->bulletCountMax = bulletMultiplier * someWorld->settings.playerCount;
 	someWorld->bulletCountAlive = 0;
 	someWorld->playerCountAlive = 0;
 	someWorld->tailCountAlive = 0;
@@ -107,13 +100,13 @@ void init_world(World_t *someWorld)
 #endif
 
 	/* Visu spēlētāju objektu pūls. Satur koordinātes, virzienu utl. */
-	someWorld->Players =  malloc( someWorld->playerCountMax * sizeof(upd_player_t)); 
+	someWorld->Players =  malloc( someWorld->settings.playerCount * sizeof(upd_player_t)); 
 
 	/* Visu iespējamo ložu pūls. */
-	someWorld->Bullets =  malloc( someWorld->bulletCountMax * sizeof(struct UpdateBullet) ); 
+	someWorld->Bullets =  malloc( someWorld->bulletCountMax * sizeof(upd_bullet_t) ); 
 	
 	/* Visu astes saraksts */
-	someWorld->Tails = (Tail_t *) malloc( someWorld->playerCountMax * sizeof(Tail_t) ); 
+	someWorld->Tails = (Tail_t *) malloc( someWorld->settings.playerCount * sizeof(Tail_t) ); 
 	
 }
 
@@ -255,11 +248,11 @@ void * getUpdateMessage(World_t *someWorld, size_t *length)
 	return packet;
 }
 
-void CreateClientWorld(World_t *someWorld,struct ConnectionResponse * Params)
+void CreateClientWorld(World_t *someWorld,conn_resp_t * Params)
 {
 	int k,i;
-	someWorld->height=Params->height;
-	someWorld->width=Params->width;
+	someWorld->settings.height=Params->height;
+	someWorld->settings.width=Params->width;
 // WARNING SHIT CODED 2d ARRAY REFACTOR NAHOOOJ
 	//someWorld->Field = malloc(Params->width * sizeof(struct WorldCell));
 
@@ -268,7 +261,7 @@ void CreateClientWorld(World_t *someWorld,struct ConnectionResponse * Params)
 	//	someWorld->Field[k] = malloc(sizeof(struct WorldCell*));
 	//	memset(someWorld->Field[k], 0, sizeof(struct WorldCell*));
    // }
-	someWorld->Players = (upd_player_t*)malloc(someWorld->playerCountMax * sizeof(upd_player_t));
+	someWorld->Players = (upd_player_t*)malloc(someWorld->settings.playerCount * sizeof(upd_player_t));
 //	for (i = 0; i < Params->width; i++)
 //		for ( k = 0; k < Params->height; k++)
 //		{
@@ -336,7 +329,7 @@ void MoveBullets(World_t *MyWorld)
 	for (i=0;i<MyWorld->bulletCountMax;i++)
 	{
 		if (Bullets[i].x != -1 || Bullets[i].y != -1)
-			for (j=0;j<MyWorld->bulletSpeed;j++)
+			for (j=0;j<MyWorld->settings.bulletSpeed;j++)
 			{	
 /*
 				if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
@@ -366,7 +359,7 @@ void DeletePlayer(World_t *MyWorld, int ID)
 	int i;
 	upd_player_t *DelPlayer;
 	DelPlayer = getSelf(MyWorld);
-	for (i=0;i<MyWorld->playerCountMax;i++)
+	for (i=0;i<MyWorld->settings.playerCount;i++)
 	{
 		if (DelPlayer[i].id == ID)
 		{
@@ -383,7 +376,7 @@ void MovePlayers(World_t *MyWorld)
 	upd_player_t *CurPlayers;
 	CurPlayers = getSelf(MyWorld);
 	int i;
-	for (i=0;i<MyWorld->playerCountMax;i++)
+	for (i=0;i<MyWorld->settings.playerCount;i++)
 	{
 		if (CurPlayers[i].gameover == 0)
 		{
@@ -414,13 +407,13 @@ void CreateServerWorld(World *someWorld)
 	MyWorld->tailLength=10;
 	MyWorld->frameRate=60;
 	MyWorld->bulletSpeed=2;
-	MyWorld->bulletCoolDown=20;
+	MyWorld->bulletCooldown=20;
 	MyWorld->bulletCountAlive=0;
 	MyWorld->timeout=100;
 	MyWorld->playerCount=4;
 	MyWorld->playerCountAlive=0;
-	bulletMultiplier = maxSide/(MyWorld->bulletCoolDown*MyWorld->bulletSpeed);
-	if (maxSide%(MyWorld->bulletCoolDown*MyWorld->bulletSpeed)>0)
+	bulletMultiplier = maxSide/(MyWorld->bulletCooldown*MyWorld->bulletSpeed);
+	if (maxSide%(MyWorld->bulletCooldown*MyWorld->bulletSpeed)>0)
 		bulletMultiplier++;
 	MyWorld->bulletCount=bulletMultiplier*MyWorld->playerCount;
 	MyWorld->Field=(WorldCell**)malloc(MyWorld->width * sizeof(WorldCell*));
@@ -452,11 +445,11 @@ void CreateClientWorld(World *someWorld,ConnectionResponse * Params)
 	MyWorld->tailLength=Params->tailLength
 	MyWorld->frameRate=Params->frameRate;
 	MyWorld->bulletSpeed=Params->bulletSpeed;
-	MyWorld->bulletCoolDown=Params->bulletCoolDown;
+	MyWorld->bulletCooldown=Params->bulletCooldown;
 	MyWorld->timeout=Params->timeout;	
 	MyWorld->playerCount=Params->playerCount;
-	bulletMultiplier = maxSide/(MyWorld->bulletCoolDown*MyWorld->bulletSpeed);
-	if (maxSide%(MyWorld->bulletCoolDown*MyWorld->bulletSpeed)>0)
+	bulletMultiplier = maxSide/(MyWorld->bulletCooldown*MyWorld->bulletSpeed);
+	if (maxSide%(MyWorld->bulletCooldown*MyWorld->bulletSpeed)>0)
 		bulletMultiplier++;
 	MyWorld->bulletCount=bulletMultiplier*MyWorld->playerCount;
 	MyWorld->Bullets=(UpdateBullet*)malloc(bulletMultiplier * sizeof(UpdateBullet*));

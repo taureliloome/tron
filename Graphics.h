@@ -23,7 +23,7 @@ void init_game(void)
     initscr();
    // noecho();
    // curs_set(0);
-	key_detecter = newwin(HEIGHT, WIDTH, 0, 0);
+    key_detecter = newwin(HEIGHT, WIDTH, 0, 0);
     nodelay(key_detecter, TRUE);
 };
 
@@ -42,7 +42,7 @@ void drawWorld(World_t *MyWorld) {
 		for ( y = 0; y < MyWorld->settings.height; y++ ) {
 			tempCell = MyWorld->Field[x][y];
 			if ( tempCell.type != EMPTY ) {
-				printf("x: %d,y:%d, type: %d",x,y,tempCell.type);
+				
 				switch ( tempCell.type ) {
 					case 0: /* player */
 						NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);

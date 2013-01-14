@@ -61,7 +61,7 @@ upd_player_t* getSelf(World_t *MyWorld)
 
 void createPlayer(World_t *someWorld, int id,int x,int y)
 {
-	update_player_t * playerIt=someWorld->Players+sizeof( upd_player_t)*someWorld->playerCountAlive;
+	upd_player_t * playerIt=someWorld->Players+sizeof(upd_player_t)*someWorld->playerCountAlive;
 	struct UpdatePlayer *newPlayer = malloc( sizeof(upd_player_t) );
 	newPlayer->id = id;
 	newPlayer->x = x;

@@ -8,26 +8,26 @@
 /**
   * Currently connected client count
   */
-uint8_t clientCount = 0;
+uint32_t *clientCount = 0;
 
-void setClientCount(uint8_t upd)
+void setClientCounter(void *ptr)
 {
-	clientCount = upd;
+	clientCount = ptr;
 }
 
 void incrClientCount()
 {
-	clientCount++;
+	*clientCount++;
 }
 
 void decrClientCount()
 {
-	clientCount--;
+	*clientCount--;
 }
 
 uint8_t getClientCount()
 {
-	return clientCount;
+	return *clientCount;
 }
 
 /**

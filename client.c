@@ -94,14 +94,14 @@ int main(int argc, char *argv[])
 				}
 				
 #ifdef SERVER_ACTIVE
-					event.direction = (getSelf(&game))->direction;
-					if ( c == ' ')
-						event.shot = 1;
-					else
-						event.shot = 0;
-					SendMessage(sockfd, &event, sizeof(event), PCKT_EVENT);
+				event.direction = (getSelf(&game))->direction;
+				if ( c == ' ')
+					event.shot = 1;
+				else
+					event.shot = 0;
+				SendMessage(sockfd, &event, sizeof(event), PCKT_EVENT);
 
-					DEBUG("Sending update event { %d, %d } to server \n", event.direction, event.shot );
+				DEBUG("Sending update event { %d, %d } to server \n", event.direction, event.shot );
 #endif
 				
 				

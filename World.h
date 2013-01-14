@@ -37,7 +37,7 @@ typedef struct Tail{
 }Tail_t;
 
 typedef struct World {
-	void ***Field;	/* Divdimensiju masivs ar noradem uz objektu kurš aizņem konkrētu šunu. */
+	WorldCell_t ***Field;	/* Divdimensiju masivs ar noradem uz objektu kurš aizņem konkrētu šunu. */
 	void *Players;		/* Visu spēlētāju objektu pūls. Satur koordinātes, virzienu utl. */
 	void *Bullets;		/* Visu iespējamo ložu pūls. */
 
@@ -68,8 +68,9 @@ void init_world(World_t *someWorld)
 {
 	int bulletMultiplier = 0, maxSide = 0, i = 0;
 	
+//TODO: remove hardcoded params
 	someWorld->height = 24;    
-    someWorld->width = 80;
+    	someWorld->width = 80;
 
 	if (someWorld->height >= someWorld->width)
 		maxSide = someWorld->height;
@@ -93,15 +94,15 @@ void init_world(World_t *someWorld)
 	someWorld->playerCountAlive = 0;
 	someWorld->tailCountAlive = 0;
 
+	setClientCounter(&someWorld->playerCountAlive);
+
 	Tail_t *Tails;		/* Spēlētāju astes */
 
 	/* Divdimensiju masivs ar noradem uz objektu kurš aizņem konkrētu šunu. */
 
-// WARNING SHIT CODED 2d ARRAY REFACTOR NAHOOOJ
-
-	someWorld->Field = (void** ) malloc( someWorld->width * sizeof(void*)); 
+	someWorld->Field = (WorldCell_t ***)( malloc(someWorld->width * sizeof(WorldCell_t *))); 
 	for ( i= 0; i < someWorld->width; i++) {
-	  someWorld->Field[i] = (void*) malloc( someWorld->height * sizeof(struct WorldCell));
+	  someWorld->Field[i] = (WorldCell_t **) malloc( someWorld->height * sizeof(WorldCell_t));
 	}
 	
 	/* Visu spēlētāju objektu pūls. Satur koordinātes, virzienu utl. */
@@ -117,6 +118,11 @@ void init_world(World_t *someWorld)
 
 void * getUpdateMessage(World_t *someWorld, size_t *length)
 {
+	if ( someWorld == NULL ) {
+		*length = 0;
+		return NULL;
+	}
+		
 	void *packet,*tailPacket;
 
 	struct UpdatePlayerHeader plHeader; //speletaju galvene

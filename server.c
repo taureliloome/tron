@@ -32,38 +32,14 @@ typedef enum {
 static uint8_t game_state = GS_STARTUP;
 uint8_t *playerTimeout = NULL;
 uint32_t *playerFDs = NULL;
-static World_t MyWorld;
-
-//TODO: Send msg every 25 seconds. Error handling.
-static void submitDirSrv(char *argv[]){
-    // IP and PORT for Directory server
-    const char* dirSrv[] = { "127.0.0.1", "1338" };
-    int dir_alive = 1;  
-    int dirsockfd = 0;
-    char buf[255] = { '\0' };
-    int len;
-    strcpy(buf,"^A ");
-    strcpy(buf+3,argv[1]);
-    strcpy(buf+3+strlen(argv[1]),"$");
-    len = strlen(buf);
-    //printf("\n%s\n",buf); // debug of data buffer
-    dir_alive = ConnectToServer(dirSrv[0], dirSrv[1], &dirsockfd);
-
-    while(dir_alive){
-        void *dirbuf = NULL;
-        if ( len != write(dirsockfd, buf, len) )
-        {
-            perror(":(");
-        }
-    }
-}
+static World_t ServerWorld;
 
 int main(int argc, char *argv[])
 {
 	FILE *fd = fopen("./server.out", "w+");
-	if ( fd )
-		setOutputType(fd);
-	else
+	//if ( fd )
+	//	setOutputType(fd);
+	//else
 		setOutputType(stderr);
 
 	setLogLevel(LOG_LEVEL_ALL);
@@ -72,17 +48,20 @@ int main(int argc, char *argv[])
 	playerFDs = malloc(sizeof(uint8_t) * playerCount);
 	memset(playerTimeout, 0, sizeof(uint8_t) * playerCount);
 	memset(playerFDs, 0, sizeof(uint8_t) * playerCount);
-
-    //TODO: Put this function in right place
-    submitDirSrv(argv);
 	if ( argc != 2 )
 	{
         printf("\n Usage: %s <port of server>\n",argv[0]);
 		return 1;
 	}
+
+	init_world(&ServerWorld);
+
+    //TODO: Enable when required sends messages to the list server
+    //submitDirSrv(argv);
+
     CreateListenSocket(argv[1], &listenfd);
 	
-	waitForPlayers(playerCount, listenfd);
+	waitForPlayers(ServerWorld.playerCountMax, listenfd);
 
 	close(listenfd);
 	free(playerTimeout);
@@ -121,7 +100,7 @@ static void* clientHandler(void *fd)
 	while(1) {
 		RecieveMessage(connfd, &msg_type, &playerTimeout[playerId]);
 
-		upd_pkt = getUpdateMessage(MyWorld, &upd_pkt_len);
+		upd_pkt = getUpdateMessage(&ServerWorld, &upd_pkt_len);
 		SendMessage(connfd, upd_pkt, upd_pkt_len, PCKT_UPDATE);
 		if ( playerTimeout[playerId] >= 5 )
 		{
@@ -150,3 +129,28 @@ static int getPlayerIdFromConnFd(uint8_t connfd)
 	}
 	return -1;
 }
+
+//TODO: Send msg every 25 seconds. Error handling.
+static void submitDirSrv(char *argv[]){
+    // IP and PORT for Directory server
+    const char* dirSrv[] = { "127.0.0.1", "1338" };
+    int dir_alive = 1;  
+    int dirsockfd = 0;
+    char buf[255] = { '\0' };
+    int len;
+    strcpy(buf,"^A ");
+    strcpy(buf+3,argv[1]);
+    strcpy(buf+3+strlen(argv[1]),"$");
+    len = strlen(buf);
+    //printf("\n%s\n",buf); // debug of data buffer
+    dir_alive = ConnectToServer(dirSrv[0], dirSrv[1], &dirsockfd);
+
+    while(dir_alive){
+        void *dirbuf = NULL;
+        if ( len != write(dirsockfd, buf, len) )
+        {
+			ERROR("Unable to notify connection server");
+        }
+    }
+}
+

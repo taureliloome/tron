@@ -3,6 +3,7 @@
 
 #include <ncurses.h>
 #include "World.h"
+#include <stdio.h>
 
 #define WIDTH        80
 #define HEIGHT       24
@@ -34,18 +35,23 @@ void terminate_game(void)
 
 void drawWorld(World_t *MyWorld) {
 	uint32_t x, y;
+	WorldCell_t tempCell;
 	//TODO add borders PLEASE!
 	for ( x = 0; x < MyWorld->width; x++ ) {
-		for ( x = 0; x < MyWorld->height; x++ ) {
-			if ( ((WorldCell_t *)(MyWorld->Field[x][y])) != NULL ) {
-				switch ( ((WorldCell_t  *)(&MyWorld->Field[x][y]))->type ) {
+		for ( y = 0; y < MyWorld->height; y++ ) {
+			tempCell = MyWorld->Field[x][y];
+			if ( tempCell.type != EMPTY ) {
+				switch ( tempCell.type ) {
 					case 0: /* player */
+						printf("x: %d,y:%d, type: %d",tempCell.type);
 						mvaddch(x,y,DRAW_BIKE);
 						break;
 					case 1: /* bullet */
+						printf("x: %d,y:%d, type: %d",tempCell.type);
 						mvaddch(x,y,DRAW_BULT);
 						break;
 					case 2: /* tail */
+						printf("x: %d,y:%d, type: %d",tempCell.type);
 						mvaddch(x,y,DRAW_TAIL);
 						break;
 				}

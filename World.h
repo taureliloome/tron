@@ -38,6 +38,7 @@ typedef struct Tail{
 
 typedef struct World {
 	WorldCell_t Field[80][24];	/* Divdimensiju masivs ar noradem uz objektu kurš aizņem konkrētu šunu. */
+
 	void *Players;		/* Visu spēlētāju objektu pūls. Satur koordinātes, virzienu utl. */
 	void *Bullets;		/* Visu iespējamo ložu pūls. */
 
@@ -55,6 +56,21 @@ typedef struct World {
 upd_player_t* getSelf(World_t *MyWorld)
 {
 	return MyWorld->Players;   // Jo massiva [0] elements ir vienads ar pointera adresi
+}
+
+
+void createPlayer(World_t *someWorld, int id,int x,int y)
+{
+	update_player_t * playerIt=someWorld->Players+sizeof( upd_player_t)*someWorld->playerCountAlive;
+	struct UpdatePlayer *newPlayer = malloc( sizeof(upd_player_t) );
+	newPlayer->id = id;
+	newPlayer->x = x;
+	newPlayer->y = y;
+	newPlayer->direction = DIR_UP;
+	newPlayer->cooldown = 0;         // Lodes cooldown (Kadros)
+    	newPlayer->gameover = 1;         // 1 - miris, 0 - spēlē
+	memcpy ( playerIt, newPlayer, sizeof(newPlayer));
+	someWorld->playerCountAlive++;
 }
 
 void init_world(World_t *someWorld)
@@ -248,6 +264,8 @@ void * getUpdateMessage(World_t *someWorld, size_t *length)
 	return packet;
 }
 
+
+
 void CreateClientWorld(World_t *someWorld,conn_resp_t * Params)
 {
 	int k,i;
@@ -262,7 +280,27 @@ void CreateClientWorld(World_t *someWorld,conn_resp_t * Params)
 	//	someWorld->Field[k] = malloc(sizeof(struct WorldCell*));
 	//	memset(someWorld->Field[k], 0, sizeof(struct WorldCell*));
    // }
+
 	someWorld->Players = (upd_player_t*)malloc(someWorld->settings.playerCount * sizeof(upd_player_t));
+	createPlayer(someWorld ,Params->id,40,10); //izveidojam pirmo speletaju, to kuru vadis tekošais klients
+
+//	someWorld->Field = malloc(Params->width * Params->height * sizeof(void**));
+//
+//   	for (k = 0; k < Params->width; k++) 
+//  	{
+//		someWorld->Field[k] = malloc(Params->height * sizeof(void*));
+//		for(i = 0; i < Params->height; i++)
+//		{
+//			tempCell = someWorld->Field[k][i];
+//			tempCell.x = k;
+//			tempCell.y = i;
+//		}
+//		
+//    	}
+//
+//	someWorld->Players = (struct UpdatePlayer*)malloc(someWorld->playerCountMax * sizeof(struct UpdatePlayer));
+
+
 //	for (i = 0; i < Params->width; i++)
 //		for ( k = 0; k < Params->height; k++)
 //		{
@@ -273,6 +311,7 @@ void CreateClientWorld(World_t *someWorld,conn_resp_t * Params)
 //			((WorldCell_t *)someWorld->Field[i][k])->dir = dir;
 //		}
 }
+
 
 void ClientMove(int c, World_t *MyWorld)
 {
@@ -332,6 +371,7 @@ void MoveBullets(World_t *MyWorld)
 			{	
 /*
 				if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
+<<<<<<< Updated upstream
 					[Bullets[i].y+gety(Bullets[i].direction)].type != EMPTY)
 				{
 					if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
@@ -350,6 +390,18 @@ void MoveBullets(World_t *MyWorld)
 						[Bullets[i].y+gety(Bullets[i].direction)].type == HEAD)
 					{
 					}	
+=======
+<<<<<<< Updated upstream
+					[Bullets[i].y+gety(Bullets[i].direction)]).type == BULLET)
+				{
+				
+				}
+				else
+				if ((MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
+					[Bullets[i].y+gety(Bullets[i].direction)]).type == TAIL)
+				{
+
+>>>>>>> Stashed changes
 
 				}
 				else

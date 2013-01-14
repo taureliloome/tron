@@ -91,7 +91,7 @@ static void waitForPlayers(int reqClientCount, int listenfd)
 static void* clientHandler(void *fd)
 {
 	int connfd = *(int *)fd;
-	uint32_t playerId = getPlayerIdFromConnFd(connfd);
+	uint32_t playerId = 0; //getPlayerIdFromConnFd(connfd);
 	uint8_t msg_type = 0;
 	int a = 5639, i = 0;
 	void *upd_pkt;

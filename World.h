@@ -32,12 +32,12 @@ typedef struct WorldCell {
 typedef struct Tail{
 	uint32_t length; //Vienas astes tekošais garums;
 	uint32_t playerId;  //saimnieka ID;
-	struct UpdateTail* cells; //massivs ar astes šūnām;  ja aste dead -1,-1
+	upd_tail_t* cells; //massivs ar astes šūnām;  ja aste dead -1,-1
 	
 }Tail_t;
 
 typedef struct World {
-	WorldCell_t ***Field;	/* Divdimensiju masivs ar noradem uz objektu kurš aizņem konkrētu šunu. */
+	WorldCell_t Field[24][80];	/* Divdimensiju masivs ar noradem uz objektu kurš aizņem konkrētu šunu. */
 	void *Players;		/* Visu spēlētāju objektu pūls. Satur koordinātes, virzienu utl. */
 	void *Bullets;		/* Visu iespējamo ložu pūls. */
 
@@ -59,14 +59,14 @@ typedef struct World {
 	uint32_t tailCountAlive;
 }World_t;
 
-struct UpdatePlayer* getSelf(World_t *MyWorld)
+upd_player_t* getSelf(World_t *MyWorld)
 {
 	return MyWorld->Players;   // Jo massiva [0] elements ir vienads ar pointera adresi
 }
 
 void init_world(World_t *someWorld)
 {
-	int bulletMultiplier = 0, maxSide = 0, i = 0;
+	int bulletMultiplier = 0, maxSide = 0, x = 0, y = 0;
 	
 //TODO: remove hardcoded params
 	someWorld->height = 24;    
@@ -99,14 +99,15 @@ void init_world(World_t *someWorld)
 	Tail_t *Tails;		/* Spēlētāju astes */
 
 	/* Divdimensiju masivs ar noradem uz objektu kurš aizņem konkrētu šunu. */
-
+#if 0 
 	someWorld->Field = (WorldCell_t ***)( malloc(someWorld->width * sizeof(WorldCell_t *))); 
 	for ( i= 0; i < someWorld->width; i++) {
 	  someWorld->Field[i] = (WorldCell_t **) malloc( someWorld->height * sizeof(WorldCell_t));
 	}
-	
+#endif
+
 	/* Visu spēlētāju objektu pūls. Satur koordinātes, virzienu utl. */
-	someWorld->Players =  malloc( someWorld->playerCountMax * sizeof(struct UpdatePlayer)); 
+	someWorld->Players =  malloc( someWorld->playerCountMax * sizeof(upd_player_t)); 
 
 	/* Visu iespējamo ložu pūls. */
 	someWorld->Bullets =  malloc( someWorld->bulletCountMax * sizeof(struct UpdateBullet) ); 
@@ -125,15 +126,15 @@ void * getUpdateMessage(World_t *someWorld, size_t *length)
 		
 	void *packet,*tailPacket;
 
-	struct UpdatePlayerHeader plHeader; //speletaju galvene
-	struct UpdatePlayer *tempPlayer, *playerList; // speletajs no pasaules;  speletaju saraksts aizsutisanai
+	upd_player_header_t plHeader; //speletaju galvene
+	upd_player_t *tempPlayer, *playerList; // speletajs no pasaules;  speletaju saraksts aizsutisanai
 
-	struct UpdateBulletHeader blHeader;  //lozu galvene
-	struct UpdateBullet *tempBullet,*bulletList;; // lode no pasaules;  lozu saraksts aizsutisanai
+	upd_bullet_header_t blHeader;  //lozu galvene
+	upd_bullet_t *tempBullet,*bulletList;; // lode no pasaules;  lozu saraksts aizsutisanai
 	
-	struct UpdateTotalTailHeader totalTailHeader;  //Visu astes galvene
-	struct UpdateTailHeader *tempTailHeader; //Vienas astes galvene
-	struct UpdateTail tempCell,*tempCellList; // veina astes šūna;  šūnu saraksts
+	upd_total_tail_header_t totalTailHeader;  //Visu astes galvene
+	upd_tail_header_t *tempTailHeader; //Vienas astes galvene
+	upd_tail_t tempCell,*tempCellList; // veina astes šūna;  šūnu saraksts
 	Tail_t *tempTail;  // lai ielasītu no pasaules vieni asti
 
 	int i=0, k=0, cellLengthSumm=0, size=0;  // cellLengthSumm - visu astu šunu summa, lai aprekinatu astes paketes garumu;
@@ -144,16 +145,20 @@ void * getUpdateMessage(World_t *someWorld, size_t *length)
 	plHeader.playerCount = someWorld->playerCountAlive;
 	size += sizeof(&plHeader);	
 
-	playerList = ( struct UpdatePlayer* ) malloc( someWorld->playerCountAlive * sizeof( struct UpdatePlayer ) ); // Izdalam atminu speletaju sarakstam
-	size += someWorld->playerCountAlive * sizeof( struct UpdatePlayer );	
+	size_t alloc_size = someWorld->playerCountAlive * sizeof(upd_player_t);
+	if ( alloc_size > sizeof(upd_player_t) )
+	{
+		playerList = ( upd_player_t* ) malloc( alloc_size ); // Izdalam atminu speletaju sarakstam
+		size += alloc_size;	
+	}
 
-	tempPlayer = (struct UpdatePlayer* ) someWorld->Players;
+	tempPlayer = (upd_player_t* ) someWorld->Players;
 
 	for(i = 0; i < someWorld->playerCountAlive; i++)
 	{
 		memcpy(playerList, tempPlayer, sizeof(tempPlayer));  // ierakstam sarakstaa pa speletajam
-		playerList += sizeof( struct UpdatePlayer);
-		tempPlayer += sizeof( struct UpdatePlayer);
+		playerList += sizeof( upd_player_t);
+		tempPlayer += sizeof( upd_player_t);
 	}
 	
 	/* Creating packet with list of bullets */
@@ -161,9 +166,12 @@ void * getUpdateMessage(World_t *someWorld, size_t *length)
 	blHeader.bulletCount = someWorld->bulletCountAlive;
 	size += sizeof(&blHeader);
 
-	bulletList = (struct UpdateBullet* ) malloc( someWorld->bulletCountAlive * sizeof( struct UpdateBullet)); // Izdalam atminu lozu sarakstam
-	size += someWorld->bulletCountAlive * sizeof( struct UpdateBullet );
-
+	alloc_size = someWorld->bulletCountAlive * sizeof(upd_bullet_t);
+	if ( alloc_size >= sizeof(upd_bullet_t) )
+	{
+		bulletList = (upd_bullet_t* ) malloc(alloc_size); // Izdalam atminu lozu sarakstam
+		size += alloc_size;
+	}
 	tempBullet = (struct UpdateBullet* ) someWorld->Bullets;
 
 	for(i = 0; i < someWorld->bulletCountAlive; i++)
@@ -185,25 +193,28 @@ void * getUpdateMessage(World_t *someWorld, size_t *length)
 
 	/* Tail packet to store header and list of cells of each tail */
 
-	tailPacket = malloc( sizeof(struct UpdateTail) * cellLengthSumm + sizeof(struct UpdateTailHeader) * someWorld->tailCountAlive );
-	
-	size += sizeof( struct UpdateTail ) * cellLengthSumm + sizeof( struct UpdateTailHeader) * someWorld->tailCountAlive;
+	alloc_size = sizeof(upd_tail_t) * cellLengthSumm + sizeof(upd_tail_header_t) * someWorld->tailCountAlive;
+	if ( alloc_size >= sizeof(upd_tail_t) * cellLengthSumm + sizeof(upd_tail_header_t) * someWorld->tailCountAlive )
+	{
+		tailPacket = malloc(alloc_size);
+		size += alloc_size;
+	}
 
 	for(i = 0; i < someWorld->tailCountAlive; i++)
 	{
-		tempTailHeader = (struct UpdateTailHeader *) malloc( sizeof( struct UpdateTailHeader) ); // Izdalam atminu astes galvenei
+		tempTailHeader = (upd_tail_header_t *) malloc( sizeof( upd_tail_header_t) ); // Izdalam atminu astes galvenei
 		tempTailHeader->id = tempTail->playerId;
 		tempTailHeader->tailCount = tempTail->length;
 		
-		tempCellList = (struct UpdateTail *) malloc( tempTail->length * sizeof( struct UpdateTail) );
+		tempCellList = (upd_tail_t *) malloc( tempTail->length * sizeof( upd_tail_t) );
 		for(k=0 ; k < tempTail->length ; k++)
 		{
 			memcpy(tempCellList, &tempTail->cells[k], sizeof(tempTail->cells[k]));  // ierakstam sarakstaa pa astes šunai
-			tempCellList += sizeof(struct UpdateTail);
+			tempCellList += sizeof(upd_tail_t);
 		}
 		tempTail += sizeof(Tail_t);
 		memcpy(tailPacket, tempTailHeader, sizeof(tempTailHeader));		
-		tailPacket += sizeof(struct UpdateTailHeader);
+		tailPacket += sizeof(upd_tail_header_t);
 		memcpy(tailPacket, tempCellList, sizeof(tempCellList) );
 		tailPacket += sizeof(tempCellList);
 	}
@@ -215,20 +226,30 @@ void * getUpdateMessage(World_t *someWorld, size_t *length)
 	memcpy(packet, &plHeader, sizeof( &plHeader) );
 	packet+=sizeof(&plHeader);
 
-	memcpy( packet, playerList, sizeof(playerList) );
-	packet += sizeof( playerList );
+	if ( playerList ) {
+		memcpy( packet, playerList, sizeof(playerList) );
+		packet += sizeof( playerList );
+	}
 	
-	memcpy( packet, &blHeader, sizeof(&blHeader) );
-	packet += sizeof(&blHeader);
+	if ( playerList ) {
+		memcpy( packet, &blHeader, sizeof(&blHeader) );
+		packet += sizeof(&blHeader);
+	}
 
-	memcpy( packet , bulletList, sizeof(bulletList) );
-	packet += sizeof( bulletList );
+	if ( playerList ) {
+		memcpy( packet , bulletList, sizeof(bulletList) );
+		packet += sizeof( bulletList );
+	}
 	
-	memcpy( packet , &totalTailHeader, sizeof(&totalTailHeader) );
-	packet += sizeof(&totalTailHeader);
+	if ( playerList ) {
+		memcpy( packet , &totalTailHeader, sizeof(&totalTailHeader) );
+		packet += sizeof(&totalTailHeader);
+	}
 
-	memcpy(packet, tailPacket, sizeof(tailPacket) );
-	size += sizeof( tailPacket );
+	if ( playerList ) {
+		memcpy(packet, tailPacket, sizeof(tailPacket) );
+		size += sizeof( tailPacket );
+	}
 
 	*length = sizeof( packet);
 	return packet;
@@ -240,14 +261,14 @@ void CreateClientWorld(World_t *someWorld,struct ConnectionResponse * Params)
 	someWorld->height=Params->height;
 	someWorld->width=Params->width;
 // WARNING SHIT CODED 2d ARRAY REFACTOR NAHOOOJ
-	someWorld->Field = malloc(Params->width * sizeof(struct WorldCell));
+	//someWorld->Field = malloc(Params->width * sizeof(struct WorldCell));
 
-    for (k = 0; k < Params->height; k++) 
-    {
-		someWorld->Field[k] = malloc(sizeof(struct WorldCell*));
-		memset(someWorld->Field[k], 0, sizeof(struct WorldCell*));
-    }
-	someWorld->Players = (struct UpdatePlayer*)malloc(someWorld->playerCountMax * sizeof(struct UpdatePlayer));
+    //for (k = 0; k < Params->height; k++) 
+    //{
+	//	someWorld->Field[k] = malloc(sizeof(struct WorldCell*));
+	//	memset(someWorld->Field[k], 0, sizeof(struct WorldCell*));
+   // }
+	someWorld->Players = (upd_player_t*)malloc(someWorld->playerCountMax * sizeof(upd_player_t));
 //	for (i = 0; i < Params->width; i++)
 //		for ( k = 0; k < Params->height; k++)
 //		{
@@ -263,7 +284,7 @@ void CreateClientWorld(World_t *someWorld,struct ConnectionResponse * Params)
 
 void ClientMove(int c, World_t *MyWorld)
 {
-	struct UpdatePlayer *CurPlayer;
+	upd_player_t *CurPlayer;
 	CurPlayer = getSelf(MyWorld);
 	switch (c) 
 	{
@@ -317,32 +338,25 @@ void MoveBullets(World_t *MyWorld)
 		if (Bullets[i].x != -1 || Bullets[i].y != -1)
 			for (j=0;j<MyWorld->bulletSpeed;j++)
 			{	
+/*
 				if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
-					[Bullets[i].y+gety(Bullets[i].direction)] != NULL)
+					[Bullets[i].y+gety(Bullets[i].direction)]).type == BULLET)
 				{
-					if (((WorldCell_t  *)MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
-						[Bullets[i].y+gety(Bullets[i].direction)])->type == BULLET)
-					{
-						
-					}
-					else
-					if (((WorldCell_t  *)MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
-						[Bullets[i].y+gety(Bullets[i].direction)])->type == TAIL)
-					{
-	
-					}
-					else
-					if (((WorldCell_t  *)MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
-						[Bullets[i].y+gety(Bullets[i].direction)])->type == HEAD)
-					{
-
-					}
+				
 				}
 				else
+				if ((MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
+					[Bullets[i].y+gety(Bullets[i].direction)]).type == TAIL)
 				{
-					Bullets[i].x+=getx(Bullets[i].direction);
-					Bullets[i].y+=gety(Bullets[i].direction);
+
 				}
+				else
+				if ((MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
+					[Bullets[i].y+gety(Bullets[i].direction)]).type == HEAD)
+				{
+
+				}
+*/
 			}
 	}	
 }
@@ -350,15 +364,15 @@ void MoveBullets(World_t *MyWorld)
 void DeletePlayer(World_t *MyWorld, int ID)
 {
 	int i;
-	struct UpdatePlayer *DelPlayer;
+	upd_player_t *DelPlayer;
 	DelPlayer = getSelf(MyWorld);
 	for (i=0;i<MyWorld->playerCountMax;i++)
 	{
 		if (DelPlayer[i].id == ID)
 		{
 			DelPlayer[i].gameover=1;
-			free(MyWorld->Field[DelPlayer[i].x][DelPlayer[i].y]);
-			MyWorld->Field[DelPlayer[i].x][DelPlayer[i].y] = NULL;
+			//free(MyWorld->Field[DelPlayer[i].x][DelPlayer[i].y]);
+			//MyWorld->Field[DelPlayer[i].x][DelPlayer[i].y] = NULL;
 			break;
 		}
 	}
@@ -366,13 +380,14 @@ void DeletePlayer(World_t *MyWorld, int ID)
 
 void MovePlayers(World_t *MyWorld)
 {
-	struct UpdatePlayer *CurPlayers;
+	upd_player_t *CurPlayers;
 	CurPlayers = getSelf(MyWorld);
 	int i;
 	for (i=0;i<MyWorld->playerCountMax;i++)
 	{
 		if (CurPlayers[i].gameover == 0)
 		{
+/*
 			if (MyWorld->Field[CurPlayers[i].x+getx(CurPlayers[i].direction)][CurPlayers[i].y+gety(CurPlayers[i].direction)] == NULL)
 			{
 				CurPlayers[i].x+=getx(CurPlayers[i].direction);
@@ -382,6 +397,7 @@ void MovePlayers(World_t *MyWorld)
 			{
 				DeletePlayer(MyWorld, CurPlayers[i].id);
 			}
+*/
 		}
 	}	
 }
@@ -494,8 +510,8 @@ void collision()
 
 void UpdateWorld(void * Params)
 {
-	struct UpdatePlayerHeader * plHeader=Params;
-	struct UpdatePlayer * player;	
+	upd_player_header_t * plHeader=Params;
+	upd_player_t * player;	
 	int i=0;	
 	for(i=0;i<plHeader->playerCount;i++)
 	{

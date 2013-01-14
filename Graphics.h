@@ -41,17 +41,15 @@ void drawWorld(World_t *MyWorld) {
 		for ( y = 0; y < MyWorld->height; y++ ) {
 			tempCell = MyWorld->Field[x][y];
 			if ( tempCell.type != EMPTY ) {
+				printf("x: %d,y:%d, type: %d",x,y,tempCell.type);
 				switch ( tempCell.type ) {
 					case 0: /* player */
-						printf("x: %d,y:%d, type: %d",tempCell.type);
 						mvaddch(x,y,DRAW_BIKE);
 						break;
 					case 1: /* bullet */
-						printf("x: %d,y:%d, type: %d",tempCell.type);
 						mvaddch(x,y,DRAW_BULT);
 						break;
 					case 2: /* tail */
-						printf("x: %d,y:%d, type: %d",tempCell.type);
 						mvaddch(x,y,DRAW_TAIL);
 						break;
 				}

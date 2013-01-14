@@ -168,7 +168,6 @@ void *RecieveMessage(int readfd, uint8_t *msg_type, uint8_t *timeout)
 
 	if ( res == 0 ){
 		*timeout++;
-		DEBUG2("Timed out, retry %d\n", *timeout);
 		return NULL;
 	}
 	else if ( res == -1 ) {

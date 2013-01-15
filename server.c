@@ -36,9 +36,48 @@ uint8_t *playerTimeout = NULL;
 uint32_t *playerFDs = NULL;
 static World_t ServerWorld;
 
+void ReadConfig(FILE *fConfig)
+{
+	char *line = NULL ;
+	size_t len = 0;
+	getline(&line, &len, fConfig);
+	ServerWorld.settings.height = getValue(line);
+	getline(&line, &len, fConfig);
+	ServerWorld.settings.width = getValue(line);
+	getline(&line, &len, fConfig);
+	ServerWorld.settings.playerCount = getValue(line);
+	getline(&line, &len, fConfig);
+	ServerWorld.settings.tailLength = getValue(line);
+	getline(&line, &len, fConfig);
+	ServerWorld.settings.frameRate = getValue(line);
+	getline(&line, &len, fConfig);
+	ServerWorld.settings.bulletSpeed = getValue(line);
+	getline(&line, &len, fConfig);
+	ServerWorld.settings.bulletCooldown = getValue(line);
+	getline(&line, &len, fConfig);
+	ServerWorld.settings.timeout = getValue(line); 
+}
+
+int getValue(char *line)
+{
+	int i=0, sum=0;
+	while(line[i]!='\0'){
+         if(line[i]< 48 || line[i] > 57){
+             i++;
+         }
+         else{
+             sum = sum*10 + (line[i] - 48);
+             i++;
+         }
+    }
+	return sum;
+}
+
 int main(int argc, char *argv[])
 {
 	FILE *fd = fopen("./server.out", "w+");
+	FILE *fConfig = fopen("./server.config", "r");
+	ReadConfig(fConfig);
 	//if ( fd )
 	//	setOutputType(fd);
 	//else

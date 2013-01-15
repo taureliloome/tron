@@ -556,8 +556,8 @@ void bulletHitPlayer(World_t *MyWorld, upd_player_t *Players, Tail_t *Tails, int
 			{
 				Players[i].gameover = 1;				
 				setValuesCell(&MyWorld->Field[x][y], EMPTY, -1, -1);//izdzes speletaja moca prieksas datus
-				x-=getx(Players[i].Direction);//Dabun moca aizmugures x coord
-				y-=gety(Players[i].Direction);//Dabun moca aizmugures y coord
+				x-=getx(Players[i].direction);//Dabun moca aizmugures x coord
+				y-=gety(Players[i].direction);//Dabun moca aizmugures y coord
 				setValuesCell(&MyWorld->Field[x][y], EMPTY, -1, -1);//izdzes speletaja moca aizmugures datus
 				for (j=0;j<count;j++)//Atrod speletaja asti
 				{
@@ -585,8 +585,8 @@ bulletHitBack(World_t *MyWorld, upd_player_t *Players, Tail_t *Tails, int count,
 	int i, j, k;
 	int *tx, *ty;
 	setValuesCell(&MyWorld->Field[x][y], EMPTY, -1, -1);//izdzes speletaja moca aizmuguri datus
-	x+=getx(Players[i].Direction);//Dabun moca prieksas x coord
-	y+=gety(Players[i].Direction);//Dabun moca prieksas y coord
+	x+=getx(Players[i].direction);//Dabun moca prieksas x coord
+	y+=gety(Players[i].direction);//Dabun moca prieksas y coord
 	for (i=0;i<count;i++)
 	{
 		if (Players[i].gameover == 0)//Mekle nezaudejuso speletaju kas atrodas x, y coord
@@ -659,7 +659,7 @@ void MoveBullets(World_t *MyWorld)
 {
 	int i, j, xd, yd, id;
 	int *x, *y, dir;
-	struct upd_bullet_t *Bullets;
+	upd_bullet_t *Bullets;
 	Bullets = MyWorld->Bullets;
 	for (i=0;i<MyWorld->bulletCountMax;i++)//Visu lozu pakustinasana un parbaude uz kolizijam
 	{
@@ -708,7 +708,7 @@ void MoveBullets(World_t *MyWorld)
 						break;
 					case BULLET://Ja lode ietriecas lode tad abas lodes izdzes
 						setValuesCell(&MyWorld->Field[*x][*y], EMPTY, -1, -1);
-						bulletHitBullet(MyWorld, Bullets, MyWorld->settings.bulletCountMax, xd, yd);
+						bulletHitBullet(MyWorld, Bullets, MyWorld->bulletCountMax, xd, yd);
 						*x = -1;
 						*y = -1;
 						break;

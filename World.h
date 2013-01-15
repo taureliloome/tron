@@ -180,11 +180,11 @@ void updateClientWorld(World_t *someWorld,void * packet)
 	void *iterator = packet;
 	int i = 0, k = 0, t = 0;
 
-	DEBUG("Decoding Update Message\n");
+	DEBUG2("Decoding Update Message\n");
 	/* Handling player list */
 	playerHeader = (upd_player_header_t *) iterator;
 	iterator += sizeof(upd_player_header_t);
-	DEBUG("\tHeader playerHeader->playerCount: %u\n", playerHeader->playerCount );
+	DEBUG2("\tHeader playerHeader->playerCount: %u\n", playerHeader->playerCount );
 	for(i = 0 ; i < playerHeader->playerCount; i++){
 		
 		tempPlayer = (upd_player_t *) iterator;
@@ -200,14 +200,14 @@ void updateClientWorld(World_t *someWorld,void * packet)
 
 		iterator += sizeof(upd_player_t);
 	}
-	DEBUG("\tIterations used: %d \n", i);
+	DEBUG2("\tIterations used: %d \n", i);
 
 	/* Handling Bullet list */
 
 	bulletHeader = (upd_bullet_header_t *) iterator;
 	iterator += sizeof(upd_bullet_header_t);
 	
-	DEBUG("\tHeader bulletHeader->bulletCount: %u\n", bulletHeader->bulletCount );
+	DEBUG2("\tHeader bulletHeader->bulletCount: %u\n", bulletHeader->bulletCount );
 	for( i = 0; i < bulletHeader->bulletCount; i++){
 		
 		tempBullet = (upd_bullet_t *) iterator;
@@ -223,14 +223,14 @@ void updateClientWorld(World_t *someWorld,void * packet)
 	
 		iterator += sizeof(upd_bullet_t);
 	}
-	DEBUG("\tIterations used: %d \n", i);
+	DEBUG2("\tIterations used: %d \n", i);
 
 	/* Handling tails */
 
 	tailHeader = (upd_total_tail_header_t*) iterator;
 	iterator += sizeof(upd_total_tail_header_t);
 
-	DEBUG("\tHeader tailHeader->totalTailLength %u\n", tailHeader->totalTailLength );
+	DEBUG2("\tHeader tailHeader->totalTailLength %u\n", tailHeader->totalTailLength );
 	for( i = 0; i < tailHeader->totalTailLength; i++){
 		temptail = (upd_tail_header_t*) iterator;
 		iterator += sizeof(upd_tail_header_t);
@@ -252,7 +252,7 @@ void updateClientWorld(World_t *someWorld,void * packet)
 		}
 		
 	}
-	DEBUG("\tIterations used: %d \n", i);
+	DEBUG2("\tIterations used: %d \n", i);
 
 }
 void init_world(World_t *someWorld)

@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 		setOutputType(stderr);
 
 	
-	setLogLevel(LOG_LEVEL_ALL);
+	setLogLevel(LOG_LEVEL_DEBUG);
 
 	uint8_t keep_alive = 1;
 	uint8_t msg_type = 0, timeout = 0;
@@ -120,11 +120,8 @@ int main(int argc, char *argv[])
 	    	}
 			drawWorld(&game);	
 			getchar();		
-			//refresh();			
+			refresh();			
 		}
-		counter++;
-		if(counter>1000)
-		break;
 	}
 	NOTICE("Disconnected from server\n");
 	if (fd != NULL)

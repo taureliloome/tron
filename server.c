@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 	else
 		setOutputType(stderr);
 
-	setLogLevel(LOG_LEVEL_ALL);
+	setLogLevel(LOG_LEVEL_DEBUG);
     int listenfd = 0, playerCount = 5;
 	playerTimeout = malloc(sizeof(uint8_t) * playerCount);
 	playerFDs = malloc(sizeof(uint8_t) * playerCount);

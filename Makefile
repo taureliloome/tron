@@ -5,10 +5,13 @@ CFLAGS=-g3
 mkdir:
 	test -d ./build || mkdir ./build
 
-client: 
+local_client: mkdir
+	gcc $(CFLAGS) logger.c  client.c -o ./build/client.bin -lpthread -lcurses -DNO_SERVER
+
+client: mkdir
 	gcc $(CFLAGS) logger.c  client.c -o ./build/client.bin -lpthread -lcurses
 
-server:
+server: mkdir
 	gcc $(CFLAGS) logger.c  server.c -o ./build/server.bin -lpthread -lcurses
 
 clean:

@@ -180,11 +180,11 @@ void updateClientWorld(World_t *someWorld,void * packet)
 	void *iterator = packet;
 	int i = 0, k = 0, t = 0;
 
-	DEBUG("Decoding Update Message\n");
+	DEBUG2("Decoding Update Message\n");
 	/* Handling player list */
 	playerHeader = (upd_player_header_t *) iterator;
 	iterator += sizeof(upd_player_header_t);
-	DEBUG("\tHeader playerHeader->playerCount: %u\n", playerHeader->playerCount );
+	DEBUG2("\tHeader playerHeader->playerCount: %u\n", playerHeader->playerCount );
 	for(i = 0 ; i < playerHeader->playerCount; i++){
 		
 		tempPlayer = (upd_player_t *) iterator;
@@ -200,14 +200,14 @@ void updateClientWorld(World_t *someWorld,void * packet)
 
 		iterator += sizeof(upd_player_t);
 	}
-	DEBUG("\tIterations used: %d \n", i);
+	DEBUG2("\tIterations used: %d \n", i);
 
 	/* Handling Bullet list */
 
 	bulletHeader = (upd_bullet_header_t *) iterator;
 	iterator += sizeof(upd_bullet_header_t);
 	
-	DEBUG("\tHeader bulletHeader->bulletCount: %u\n", bulletHeader->bulletCount );
+	DEBUG2("\tHeader bulletHeader->bulletCount: %u\n", bulletHeader->bulletCount );
 	for( i = 0; i < bulletHeader->bulletCount; i++){
 		
 		tempBullet = (upd_bullet_t *) iterator;
@@ -223,14 +223,14 @@ void updateClientWorld(World_t *someWorld,void * packet)
 	
 		iterator += sizeof(upd_bullet_t);
 	}
-	DEBUG("\tIterations used: %d \n", i);
+	DEBUG2("\tIterations used: %d \n", i);
 
 	/* Handling tails */
 
 	tailHeader = (upd_total_tail_header_t*) iterator;
 	iterator += sizeof(upd_total_tail_header_t);
 
-	DEBUG("\tHeader tailHeader->totalTailLength %u\n", tailHeader->totalTailLength );
+	DEBUG2("\tHeader tailHeader->totalTailLength %u\n", tailHeader->totalTailLength );
 	for( i = 0; i < tailHeader->totalTailLength; i++){
 		temptail = (upd_tail_header_t*) iterator;
 		iterator += sizeof(upd_tail_header_t);
@@ -252,7 +252,7 @@ void updateClientWorld(World_t *someWorld,void * packet)
 		}
 		
 	}
-	DEBUG("\tIterations used: %d \n", i);
+	DEBUG2("\tIterations used: %d \n", i);
 
 }
 void init_world(World_t *someWorld)
@@ -454,49 +454,43 @@ void CreateClientWorld(World_t *someWorld,conn_resp_t * Params)
 	WorldCell_t tempCell;
 	someWorld->settings.height=Params->height;
 	someWorld->settings.width=Params->width;
-// WARNING SHIT CODED 2d ARRAY REFACTOR NAHOOOJ
-	//someWorld->Field = malloc(Params->width * sizeof(struct WorldCell));
-
-    //for (k = 0; k < Params->height; k++) 
-    //{
-	//	someWorld->Field[k] = malloc(sizeof(struct WorldCell*));
-	//	memset(someWorld->Field[k], 0, sizeof(struct WorldCell*));
-   // }
 
 	someWorld->Players = (upd_player_t*)malloc(someWorld->settings.playerCount * sizeof(upd_player_t));
-
 	createPlayer(someWorld , Params->id,40,10); //izveidojam pirmo speletaju, to kuru vadis tekošais klients
-
 	createtail(someWorld, Params->id); //izveidojam vinam asti garuma 0
-
-
 
 //	someWorld->Field = malloc(Params->width * Params->height * sizeof(void**));
 //
 //   	for (k = 0; k < Params->width; k++) 
 //  	{
-//		someWorld->Field[k] = malloc(Params->height * sizeof(void*));
-//		for(i = 0; i < Params->height; i++)
-//		{
-//			tempCell = someWorld->Field[k][i];
-//			tempCell.x = k;
-//			tempCell.y = i;
-//		}
-//		
+//			someWorld->Field[k] = malloc(Params->height * sizeof(void*));
+//			for(i = 0; i < Params->height; i++)
+//			{
+//				tempCell = someWorld->Field[k][i];
+//				tempCell.x = k;
+//				tempCell.y = i;
+//			}
 //    	}
-//
-//	someWorld->Players = (struct UpdatePlayer*)malloc(someWorld->playerCountMax * sizeof(struct UpdatePlayer));
 
+	someWorld->Players = malloc(someWorld->settings.playerCount * sizeof(upd_player_t));
+	someWorld->Bullets = malloc(someWorld->bulletCountMax * sizeof(upd_bullet_t));
+	someWorld->tails = malloc(someWorld->settings.playerCount * sizeof(tail_t));
+	for ( i = 0; i < someWorld->settings.tailLength; i++ )
+	{
+		someWorld->tails[i].cells = (upd_tail_t *) malloc(someWorld->settings.tailLength);
+	}
 
-//	for (i = 0; i < Params->width; i++)
-//		for ( k = 0; k < Params->height; k++)
-//		{
-//			((WorldCell_t *)someWorld->Field[i][k])->x = i;
-//			((WorldCell_t *)someWorld->Field[i][k])->y = K;
-//			((WorldCell_t *)someWorld->Field[i][k])->type = type;
-//			((WorldCell_t *)someWorld->Field[i][k])->id = id;
-//			((WorldCell_t *)someWorld->Field[i][k])->dir = dir;
-//		}
+	for (i = 0; i < Params->width; i++)
+	{
+		for ( k = 0; k < Params->height; k++)
+		{
+			someWorld->Field[i][k].x	= i;
+			someWorld->Field[i][k].y	= k;
+			someWorld->Field[i][k].type	= EMPTY;
+			someWorld->Field[i][k].id	= 0;
+			someWorld->Field[i][k].dir	= DIR_MAX;
+		}
+	}
 }
 
 

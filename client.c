@@ -57,19 +57,36 @@ int main(int argc, char *argv[])
 	memset(recvBuff, '0',sizeof(recvBuff));
 
 
+#ifndef NO_SERVER
 	if(argc != 3)
 	{
 		printf("\n Usage: %s <ip of server> <port of server>\n",argv[0]);
 		return 1;
 	}
+#endif
 
 	init_game();
-	
+#ifndef NO_SERVER
 	keep_alive = ConnectToServer(argv[1], argv[2], &sockfd);
+#else
+	keep_alive = 1;
+	
+	conn_resp_t fakemsg;
+    fakemsg.id = 0;
+	fakemsg.height = 24;  
+	fakemsg.width = 80;
+	fakemsg.playerCount = 5;
+	fakemsg.tailLength = 10;
+	fakemsg.frameRate = 60;
+	fakemsg.bulletSpeed = 3;
+	fakemsg.bulletCooldown = 3;
+	fakemsg.timeout = 5;
+	CreateClientWorld(&game, &fakemsg);
+#endif
 
 	while (keep_alive)
 	{
-		
+#ifndef NO_SERVER
 		void *buf = NULL;
 		buf = RecieveMessage(sockfd, &msg_type, &timeout);
 		
@@ -101,12 +118,11 @@ int main(int argc, char *argv[])
 
 			if (gameStarted)
 			{
-				
-				//init_game();
+#endif				
+				init_game();
 				c = wgetch(key_detecter);
 				
 				if ( c != ERR ) {
-					NOTICE(" WE PRESSED: %c\n",c);
 					ClientMove(c, &game);//TODO pass c to world-done
 				}		
 				event.direction = (getSelf(&game))->direction;
@@ -114,19 +130,22 @@ int main(int argc, char *argv[])
 					event.shot = 1;
 				else
 					event.shot = 0;
+#ifndef NO_SERVER
 				SendMessage(sockfd, &event, sizeof(event), PCKT_EVENT);
 			 	DEBUG("Sending update event { %d, %d } to server \n", event.direction, event.shot );
-
 	    	}
-			drawWorld(&game);	
-			getchar();		
-			refresh();			
+#endif
+			drawWorld(&game);
+			getchar();
+			refresh();
+#ifndef NO_SERVER
 		}
+#endif
 	}
 	NOTICE("Disconnected from server\n");
 	if (fd != NULL)
 		fclose(fd);
-	//terminate_game();
+	terminate_game();
 	return 0;
 }
 

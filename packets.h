@@ -6,6 +6,7 @@ const uint32_t DIR_RIGHT    = 0;
 const uint32_t DIR_UP       = 1;
 const uint32_t DIR_LEFT     = 2;
 const uint32_t DIR_DOWN     = 3;
+const uint32_t DIR_MAX     = 4;
 
 const uint32_t MOVE_RIGHT   = 0;
 const uint32_t MOVE_LEFT    = 1;

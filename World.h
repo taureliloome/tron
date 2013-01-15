@@ -454,49 +454,43 @@ void CreateClientWorld(World_t *someWorld,conn_resp_t * Params)
 	WorldCell_t tempCell;
 	someWorld->settings.height=Params->height;
 	someWorld->settings.width=Params->width;
-// WARNING SHIT CODED 2d ARRAY REFACTOR NAHOOOJ
-	//someWorld->Field = malloc(Params->width * sizeof(struct WorldCell));
-
-    //for (k = 0; k < Params->height; k++) 
-    //{
-	//	someWorld->Field[k] = malloc(sizeof(struct WorldCell*));
-	//	memset(someWorld->Field[k], 0, sizeof(struct WorldCell*));
-   // }
 
 	someWorld->Players = (upd_player_t*)malloc(someWorld->settings.playerCount * sizeof(upd_player_t));
-
 	createPlayer(someWorld , Params->id,40,10); //izveidojam pirmo speletaju, to kuru vadis tekošais klients
-
 	createtail(someWorld, Params->id); //izveidojam vinam asti garuma 0
-
-
 
 //	someWorld->Field = malloc(Params->width * Params->height * sizeof(void**));
 //
 //   	for (k = 0; k < Params->width; k++) 
 //  	{
-//		someWorld->Field[k] = malloc(Params->height * sizeof(void*));
-//		for(i = 0; i < Params->height; i++)
-//		{
-//			tempCell = someWorld->Field[k][i];
-//			tempCell.x = k;
-//			tempCell.y = i;
-//		}
-//		
+//			someWorld->Field[k] = malloc(Params->height * sizeof(void*));
+//			for(i = 0; i < Params->height; i++)
+//			{
+//				tempCell = someWorld->Field[k][i];
+//				tempCell.x = k;
+//				tempCell.y = i;
+//			}
 //    	}
-//
-//	someWorld->Players = (struct UpdatePlayer*)malloc(someWorld->playerCountMax * sizeof(struct UpdatePlayer));
 
+	someWorld->Players = malloc(someWorld->settings.playerCount * sizeof(upd_player_t));
+	someWorld->Bullets = malloc(someWorld->bulletCountMax * sizeof(upd_bullet_t));
+	someWorld->tails = malloc(someWorld->settings.playerCount * sizeof(tail_t));
+	for ( i = 0; i < someWorld->settings.tailLength; i++ )
+	{
+		someWorld->tails[i].cells = (upd_tail_t *) malloc(someWorld->settings.tailLength);
+	}
 
-//	for (i = 0; i < Params->width; i++)
-//		for ( k = 0; k < Params->height; k++)
-//		{
-//			((WorldCell_t *)someWorld->Field[i][k])->x = i;
-//			((WorldCell_t *)someWorld->Field[i][k])->y = K;
-//			((WorldCell_t *)someWorld->Field[i][k])->type = type;
-//			((WorldCell_t *)someWorld->Field[i][k])->id = id;
-//			((WorldCell_t *)someWorld->Field[i][k])->dir = dir;
-//		}
+	for (i = 0; i < Params->width; i++)
+	{
+		for ( k = 0; k < Params->height; k++)
+		{
+			someWorld->Field[i][k].x	= i;
+			someWorld->Field[i][k].y	= k;
+			someWorld->Field[i][k].type	= EMPTY;
+			someWorld->Field[i][k].id	= 0;
+			someWorld->Field[i][k].dir	= DIR_MAX;
+		}
+	}
 }
 
 

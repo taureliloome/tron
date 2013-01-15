@@ -75,12 +75,13 @@ int getValue(char *line)
 
 int main(int argc, char *argv[])
 {
-	FILE *fd = fopen("./server.out", "w+");
+	FILE *fd = NULL; // fopen("./server.out", "w+");
 	FILE *fConfig = fopen("./server.config", "r");
 	ReadConfig(fConfig);
-	//if ( fd )
-	//	setOutputType(fd);
-	//else
+	if ( fd )
+		setOutputType(fd);
+	else
+
 		setOutputType(stderr);
 
 	setLogLevel(LOG_LEVEL_ALL);

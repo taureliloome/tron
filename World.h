@@ -501,16 +501,20 @@ void ClientMove(int c, World_t *MyWorld)
 	switch (c) 
 	{
 		case 'w':
-			CurPlayer->direction = DIR_UP;
+			if (CurPlayer->direction != DIR_DOWN)
+				CurPlayer->direction = DIR_UP;
 			break;
 		case 's':
-			CurPlayer->direction = DIR_DOWN;
+			if (CurPlayer->direction != DIR_UP)
+				CurPlayer->direction = DIR_DOWN;
 			break;
 		case 'a':
-			CurPlayer->direction = DIR_LEFT;
+			if (CurPlayer->direction != DIR_RIGHT)
+				CurPlayer->direction = DIR_LEFT;
 			break;
 		case 'd':
-			CurPlayer->direction = DIR_RIGHT;
+			if (CurPlayer->direction != DIR_LEFT)
+				CurPlayer->direction = DIR_RIGHT;
 			break;
 		case 'q':
 			//izdomaat par quit

@@ -359,16 +359,184 @@ int gety(uint32_t dir)
 	return 0;
 }
 
+void setValuesCell(WorldCell_t *Cell, int type, int id, int dir)//Pieskir Field cell vertibas
+{
+	Cell->type = type;
+	Cell->id = id;
+	Cell->dir = dir;
+}
+
+void bulletHitPlayer(World_t *MyWorld, upd_player_t *Players, Tail_t *Tails, int count, int x, int y)
+{
+	int i, j, k;
+	int *tx, *ty;
+	for (i=0;i<count;i++)
+	{
+		if (Players[i].gameover == 0)//Mekle nezaudejuso speletaju kas atrodas x, y coord
+		{
+			if (Players[i].x == x && Players[i].y == y)
+			{
+				Players[i].gameover = 1;				
+				setValuesCell(&MyWorld->Field[x][y], EMPTY, -1, -1);//izdzes speletaja moca prieksas datus
+				x-=getx(Players[i].Direction);//Dabun moca aizmugures x coord
+				y-=gety(Players[i].Direction);//Dabun moca aizmugures y coord
+				setValuesCell(&MyWorld->Field[x][y], EMPTY, -1, -1);//izdzes speletaja moca aizmugures datus
+				for (j=0;j<count;j++)//Atrod speletaja asti
+				{
+					if (Tails[j].playerId == Players[i].id)
+					{
+						for (k=0;k<Tails[j].length;k++)//Izdzes speletaja astes datus
+						{
+							tx = &Tails[j].cells[k].x;
+							ty = &Tails[j].cells[k].y;
+							setValuesCell(&MyWorld->Field[*tx][*ty], EMPTY, -1, -1);
+							*ty = -1;
+							*tx = -1;
+						}
+						break;//Iziet no astes meklesanas cikla
+					}
+				}
+				break;//Iziet no speletaja meklesanas cikla 
+			}
+		}
+	}
+}
+
+bulletHitBack(World_t *MyWorld, upd_player_t *Players, Tail_t *Tails, int count, int x, int y)
+{
+	int i, j, k;
+	int *tx, *ty;
+	setValuesCell(&MyWorld->Field[x][y], EMPTY, -1, -1);//izdzes speletaja moca aizmuguri datus
+	x+=getx(Players[i].Direction);//Dabun moca prieksas x coord
+	y+=gety(Players[i].Direction);//Dabun moca prieksas y coord
+	for (i=0;i<count;i++)
+	{
+		if (Players[i].gameover == 0)//Mekle nezaudejuso speletaju kas atrodas x, y coord
+		{
+			if (Players[i].x == x && Players[i].y == y)
+			{
+				Players[i].gameover = 1;				
+				setValuesCell(&MyWorld->Field[x][y], EMPTY, -1, -1);//izdzes speletaja moca prieksas datus
+				for (j=0;j<count;j++)//Atrod speletaja asti
+				{
+					if (Tails[j].playerId == Players[i].id)
+					{
+						for (k=0;k<Tails[j].length;k++)//Izdzes speletaja astes datus
+						{
+							tx = &Tails[j].cells[k].x;
+							ty = &Tails[j].cells[k].y;
+							setValuesCell(&MyWorld->Field[*tx][*ty], EMPTY, -1, -1);
+							*ty = -1;
+							*tx = -1;
+						}
+						break;//Iziet no astes meklesanas cikla
+					}
+				}
+				break;//Iziet no speletaja meklesanas cikla 
+			}
+		}
+	}
+}
+
+bulletHitTail(World_t *MyWorld, upd_player_t *Players, Tail_t *Tails, int count, int x, int y)
+{
+	int j, k, i=0;
+	int *tx, *ty;
+	for (j=0;j<count;j++)//Atrod asti
+	{
+		for (k=1;k<Tails[j].length;k++)//Izdzes sasautas astes datus
+		{
+			if (Tails[j].cells[0].x == x && Tails[j].cells[0].y == y)
+			{
+				tx = &Tails[j].cells[k].x;
+				ty = &Tails[j].cells[k].y;
+				setValuesCell(&MyWorld->Field[*tx][*ty], EMPTY, -1, -1);
+				*ty = -1;
+				*tx = -1;
+				i = 1;
+				break;//Iziet no astes apstaigasanas cikla
+			}
+		}
+		if (i) break;//Iziet no astes meklesanas cikla kad sasauta aste ir izdzesta
+	}
+}
+
+bulletHitBullet(World_t *MyWorld, upd_bullet_t *Bullets, int count, int x, int y)
+{
+	int j, k, i=0;
+	int *tx, *ty;
+	for (j=0;j<count;j++)
+	{
+		if (Bullets[j].x == x && Bullets[j].y == y)
+		{
+			Bullets[j].x = -1;
+			Bullets[j].y = -1;
+			setValuesCell(&MyWorld->Field[x][y], EMPTY, -1, -1);
+			break;
+		}
+	}
+}
+
 void MoveBullets(World_t *MyWorld)
 {
-	int i, j;
-	struct UpdateBullet *Bullets;
+	int i, j, xd, yd, id;
+	int *x, *y, dir;
+	struct upd_bullet_t *Bullets;
 	Bullets = MyWorld->Bullets;
-	for (i=0;i<MyWorld->bulletCountMax;i++)
+	for (i=0;i<MyWorld->bulletCountMax;i++)//Visu lozu pakustinasana un parbaude uz kolizijam
 	{
-		if (Bullets[i].x != -1 || Bullets[i].y != -1)
-			for (j=0;j<MyWorld->settings.bulletSpeed;j++)
+		x = &Bullets[i].x;
+		y = &Bullets[i].y;
+		dir = Bullets[i].direction;
+		id = Bullets[i].id;
+		if (*x != -1 || *y != -1)//Parbauda visas lodes
+			for (j=0;j<MyWorld->settings.bulletSpeed;j++)//Parbauda visu lodes paveikto celju
 			{	
+				xd = *x+getx(dir);
+				yd = *y+gety(dir);
+				if (xd<0 || xd>MyWorld->settings.width || yd<0 || yd>MyWorld->settings.height)//Parbaude vai neiziet arpus kartes
+				{
+					setValuesCell(&MyWorld->Field[*x][*y], EMPTY, -1, -1);
+					*x = -1;
+					*y = -1;
+					break;
+				}
+				else
+				switch(MyWorld->Field[xd][yd].type)
+				{
+					case EMPTY://Ja nekas lodei nav prieksa tad pabidam lodi uz prieksu
+						setValuesCell(&MyWorld->Field[*x][*y], EMPTY, -1, -1);
+						*x = xd;
+						*y = yd;
+						setValuesCell(&MyWorld->Field[xd][yd], BULLET, id, dir);
+						break;
+					case HEAD://Ja lode ietriecas moca galva tad moci un lodi izdzes
+						setValuesCell(&MyWorld->Field[*x][*y], EMPTY, -1, -1);
+						bulletHitPlayer(MyWorld, MyWorld->Players, MyWorld->Tails, MyWorld->settings.playerCount, xd, yd);
+						*x = -1;
+						*y = -1;
+						break;
+					case BACK://Ja lode ietriecas moca aizmugure tad moci un lodi izdzes
+						setValuesCell(&MyWorld->Field[*x][*y], EMPTY, -1, -1);
+						bulletHitBack(MyWorld, MyWorld->Players, MyWorld->Tails, MyWorld->settings.playerCount, xd, yd);
+						*x = -1;
+						*y = -1;
+						break;
+					case TAIL://Ja lode ietriecas aste tad astes gabalu un lodi izdzes
+						setValuesCell(&MyWorld->Field[*x][*y], EMPTY, -1, -1);
+						bulletHitTail(MyWorld, MyWorld->Players, MyWorld->Tails, MyWorld->settings.playerCount, xd, yd);
+						*x = -1;
+						*y = -1;
+						break;
+					case BULLET://Ja lode ietriecas lode tad abas lodes izdzes
+						setValuesCell(&MyWorld->Field[*x][*y], EMPTY, -1, -1);
+						bulletHitBullet(MyWorld, Bullets, MyWorld->settings.bulletCountMax, xd, yd);
+						*x = -1;
+						*y = -1;
+						break;
+				}
+				
+			}
 /*
 				if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
 <<<<<<< Updated upstream
@@ -411,7 +579,7 @@ void MoveBullets(World_t *MyWorld)
 
 				}
 */
-			}
+			
 	}	
 }
 

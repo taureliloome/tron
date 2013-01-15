@@ -16,7 +16,7 @@ typedef enum Objects{
 	EMPTY=0,
 	HEAD,
 	BACK,
-	tail,
+	TAIL,
 	BULLET
 }object_t;
 
@@ -552,7 +552,7 @@ void setValuesCell(WorldCell_t *Cell, int type, int id, int dir)//Pieskir Field 
 	Cell->dir = dir;
 }
 
-void bulletHitPlayer(World_t *MyWorld, upd_player_t *Players, Tail_t *Tails, int count, int x, int y)
+void bulletHitPlayer(World_t *MyWorld, upd_player_t *Players, tail_t *Tails, int count, int x, int y)
 {
 	int i, j, k;
 	int *tx, *ty;
@@ -588,7 +588,7 @@ void bulletHitPlayer(World_t *MyWorld, upd_player_t *Players, Tail_t *Tails, int
 	}
 }
 
-bulletHitBack(World_t *MyWorld, upd_player_t *Players, Tail_t *Tails, int count, int x, int y)
+bulletHitBack(World_t *MyWorld, upd_player_t *Players, tail_t *Tails, int count, int x, int y)
 {
 	int i, j, k;
 	int *tx, *ty;
@@ -624,7 +624,7 @@ bulletHitBack(World_t *MyWorld, upd_player_t *Players, Tail_t *Tails, int count,
 	}
 }
 
-bulletHitTail(World_t *MyWorld, upd_player_t *Players, Tail_t *Tails, int count, int x, int y)
+bulletHitTail(World_t *MyWorld, upd_player_t *Players, tail_t *Tails, int count, int x, int y)
 {
 	int j, k, i=0;
 	int *tx, *ty;
@@ -698,19 +698,19 @@ void MoveBullets(World_t *MyWorld)
 						break;
 					case HEAD://Ja lode ietriecas moca galva tad moci un lodi izdzes
 						setValuesCell(&MyWorld->Field[*x][*y], EMPTY, -1, -1);
-						bulletHitPlayer(MyWorld, MyWorld->Players, MyWorld->Tails, MyWorld->settings.playerCount, xd, yd);
+						bulletHitPlayer(MyWorld, MyWorld->Players, MyWorld->tails, MyWorld->settings.playerCount, xd, yd);
 						*x = -1;
 						*y = -1;
 						break;
 					case BACK://Ja lode ietriecas moca aizmugure tad moci un lodi izdzes
 						setValuesCell(&MyWorld->Field[*x][*y], EMPTY, -1, -1);
-						bulletHitBack(MyWorld, MyWorld->Players, MyWorld->Tails, MyWorld->settings.playerCount, xd, yd);
+						bulletHitBack(MyWorld, MyWorld->Players, MyWorld->tails, MyWorld->settings.playerCount, xd, yd);
 						*x = -1;
 						*y = -1;
 						break;
 					case TAIL://Ja lode ietriecas aste tad astes gabalu un lodi izdzes
 						setValuesCell(&MyWorld->Field[*x][*y], EMPTY, -1, -1);
-						bulletHitTail(MyWorld, MyWorld->Players, MyWorld->Tails, MyWorld->settings.playerCount, xd, yd);
+						bulletHitTail(MyWorld, MyWorld->Players, MyWorld->tails, MyWorld->settings.playerCount, xd, yd);
 						*x = -1;
 						*y = -1;
 						break;

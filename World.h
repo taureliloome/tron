@@ -625,7 +625,7 @@ bulletHitBack(World_t *MyWorld, upd_player_t *Players, tail_t *Tails, int count,
 	}
 }
 
-bulletHitTail(World_t *MyWorld, upd_player_t *Players, tail_t *Tails, int count, int x, int y)
+HitTail(World_t *MyWorld, upd_player_t *Players, tail_t *Tails, int count, int x, int y)
 {
 	int j, k, i=0;
 	int *tx, *ty;
@@ -648,7 +648,7 @@ bulletHitTail(World_t *MyWorld, upd_player_t *Players, tail_t *Tails, int count,
 	}
 }
 
-bulletHitBullet(World_t *MyWorld, upd_bullet_t *Bullets, int count, int x, int y)
+HitBullet(World_t *MyWorld, upd_bullet_t *Bullets, int count, int x, int y)
 {
 	int j, k, i=0;
 	int *tx, *ty;
@@ -711,13 +711,13 @@ void MoveBullets(World_t *MyWorld)
 						break;
 					case TAIL://Ja lode ietriecas aste tad astes gabalu un lodi izdzes
 						setValuesCell(&MyWorld->Field[*x][*y], EMPTY, -1, -1);
-						bulletHitTail(MyWorld, MyWorld->Players, MyWorld->tails, MyWorld->settings.playerCount, xd, yd);
+						HitTail(MyWorld, MyWorld->Players, MyWorld->tails, MyWorld->settings.playerCount, xd, yd);
 						*x = -1;
 						*y = -1;
 						break;
 					case BULLET://Ja lode ietriecas lode tad abas lodes izdzes
 						setValuesCell(&MyWorld->Field[*x][*y], EMPTY, -1, -1);
-						bulletHitBullet(MyWorld, Bullets, MyWorld->bulletCountMax, xd, yd);
+						HitBullet(MyWorld, Bullets, MyWorld->bulletCountMax, xd, yd);
 						*x = -1;
 						*y = -1;
 						break;
@@ -728,45 +728,134 @@ void MoveBullets(World_t *MyWorld)
 	}	
 }
 
-void DeletePlayer(World_t *MyWorld, int ID)
+void DeletePlayer(World_t *MyWorld, upd_player_t *Player, tail_t *Tails, int i, int count)
+{
+	int j, k;
+	int *x, *y;
+	x = &Player[i].x;
+	y = &Player[i].y;
+
+	Player[i].gameover = 1;				
+	setValuesCell(&MyWorld->Field[*x][*y], EMPTY, -1, -1);//izdzes speletaja moca prieksas datus
+	x-=getx(Player[i].direction);//Dabun moca aizmugures x coord
+	y-=gety(Player[i].direction);//Dabun moca aizmugures y coord
+	setValuesCell(&MyWorld->Field[*x][*y], EMPTY, -1, -1);//izdzes speletaja moca aizmugures datus
+	for (j=0;j<count;j++)//Atrod speletaja asti
+	{
+		if (Tails[j].playerId == Player[i].id)
+		{
+			for (k=0;k<Tails[j].length;k++)//Izdzes speletaja astes datus
+			{
+				x = &Tails[j].cells[k].x;
+				y = &Tails[j].cells[k].y;
+				setValuesCell(&MyWorld->Field[*x][*y], EMPTY, -1, -1);
+				*y = -1;
+				*x = -1;
+			}
+			break;//Iziet no astes meklesanas cikla
+		}
+	}
+}
+
+void DeletePlayerID(World_t *MyWorld, upd_player_t *Player, tail_t *Tails, int count, int id)
 {
 	int i;
-	upd_player_t *DelPlayer;
-	DelPlayer = getSelf(MyWorld);
-	for (i=0;i<MyWorld->settings.playerCount;i++)
+	for (i=0;i<count;i++)
 	{
-		if (DelPlayer[i].id == ID)
+		if (Player->gameover == 0)//Mekle nezaudejuso speletaju kas atrodas x, y coord
 		{
-			DelPlayer[i].gameover=1;
+			if (Player[i].id == id)
+			{
+				DeletePlayer(MyWorld, &Player[0], Tails, i, count);
+				break;//Iziet no speletaju meklesanas cikla
+			}
+		}
+	}
+}
 
-			//free(MyWorld->Field[DelPlayer[i].x][DelPlayer[i].y]);
-			//MyWorld->Field[DelPlayer[i].x][DelPlayer[i].y] = NULL;
-
-			MyWorld->Field[DelPlayer[i].x][DelPlayer[i].y].type=EMPTY;
-
-			break;
+void moveTail(World_t *MyWorld, tail_t *Tails, int id, int x, int y, int count, int dir)
+{
+	int j, k, tx, ty;
+	for (j=0;j<count;j++)//Atrod speletaja asti
+	{
+		if (Tails[j].playerId == id)
+		{
+			setValuesCell(&MyWorld->Field[x][y], TAIL, id, dir);
+			for (k=0;k<Tails[j].length-1;k++)//Pabida asti uz prieksu
+			{
+				tx = Tails[j].cells[k].x;
+				ty = Tails[j].cells[k].y;
+				Tails[j].cells[k].x = x;
+				Tails[j].cells[k].y = y;
+				x = tx;
+				y = ty;
+			}
+			if (Tails[j].length == MyWorld->settings.tailLength)
+			{
+				setValuesCell(&MyWorld->Field[Tails[j].cells[Tails[j].length].x][Tails[j].cells[Tails[j].length].y], EMPTY, -1, -1);
+			}
+			else
+			{
+				Tails[j].length++;
+			}
+			break;//Iziet no astes meklesanas cikla
 		}
 	}
 }
 
 void MovePlayers(World_t *MyWorld)
 {
+	int i, j, xd, yd, id, tx, ty;
+	int *x, *y, dir;
 	upd_player_t *CurPlayers;
 	CurPlayers = getSelf(MyWorld);
-	int i;
 	for (i=0;i<MyWorld->settings.playerCount;i++)
 	{
-		if (CurPlayers[i].gameover == 0)
+		if (CurPlayers[i].gameover == 0)//Apstaiga visus dzivos speletajus
 		{
-
-			if (MyWorld->Field[CurPlayers[i].x+getx(CurPlayers[i].direction)][CurPlayers[i].y+gety(CurPlayers[i].direction)].type == EMPTY)
+			x = &CurPlayers[i].x;
+			y = &CurPlayers[i].y;
+			dir = CurPlayers[i].direction;
+			xd = *x+getx(dir);
+			yd = *y+gety(dir);
+			tx = *x;
+			ty = *y;
+			if (xd<0 || xd>MyWorld->settings.width || yd<0 || yd>MyWorld->settings.height)//Parbaude vai neiziet arpus kartes
 			{
-				CurPlayers[i].x+=getx(CurPlayers[i].direction);
-				CurPlayers[i].y+=gety(CurPlayers[i].direction);
+				DeletePlayer(MyWorld, &CurPlayers[0], MyWorld->tails, i, MyWorld->settings.playerCount);
+				break;
 			}
 			else
+			switch(MyWorld->Field[xd][yd].type)
 			{
-				DeletePlayer(MyWorld, CurPlayers[i].id);
+				case EMPTY://Ja nekas mocim nav prieksa tad pabidam moci uz prieksu
+					tx-=getx(MyWorld->Field[tx][ty].dir);//Dabun moca aizmugures x coord
+					ty-=gety(MyWorld->Field[tx][ty].dir);//Dabun moca aizmugures y coord
+					setValuesCell(&MyWorld->Field[tx][ty], EMPTY, -1, -1);//izdzes speletaja moca aizmugures datus
+					moveTail(MyWorld, MyWorld->tails, CurPlayers[i].id, tx, ty, MyWorld->settings.playerCount, MyWorld->Field[tx][ty].dir);
+					tx+=getx(MyWorld->Field[tx][ty].dir);//Dabun moca prieksas x coord
+					ty+=gety(MyWorld->Field[tx][ty].dir);//Dabun moca prieksas y coord
+					setValuesCell(&MyWorld->Field[tx][ty], BACK, dir, CurPlayers[i].id);//Pamaina veco prieksu uz aizmuguri
+					*x = xd;
+					*y = yd;
+					setValuesCell(&MyWorld->Field[*x][*y], HEAD, dir, CurPlayers[i].id);//Pieliek jauno prieksu
+					break;
+				case HEAD://Ja mocis ietriecas moca galva tad abus mocus izdzes
+					DeletePlayer(MyWorld, &CurPlayers[0], MyWorld->tails, i, MyWorld->settings.playerCount);
+					DeletePlayerID(MyWorld, &CurPlayers[0], MyWorld->tails, MyWorld->settings.playerCount, MyWorld->Field[xd][yd].id);
+					break;
+				case BACK://Ja mocis ietriecas moca aizmugure tad abus mocus izdzes
+					DeletePlayer(MyWorld, &CurPlayers[0], MyWorld->tails, i, MyWorld->settings.playerCount);
+					DeletePlayerID(MyWorld, &CurPlayers[0], MyWorld->tails, MyWorld->settings.playerCount, MyWorld->Field[xd][yd].id);
+					break;
+				case TAIL://Ja mocis ietriecas aste tad astes gabalu un moci izdzes
+					DeletePlayer(MyWorld, &CurPlayers[0], MyWorld->tails, i, MyWorld->settings.playerCount);
+					HitTail(MyWorld, MyWorld->Players, MyWorld->tails, MyWorld->settings.playerCount, xd, yd);
+					break;
+				case BULLET://Ja lode ietriecas lode tad abas lodes izdzes
+					DeletePlayer(MyWorld, &CurPlayers[0], MyWorld->tails, i, MyWorld->settings.playerCount);
+					HitBullet(MyWorld, MyWorld->Bullets, MyWorld->bulletCountMax, xd, yd);
+					break;
 			}
 
 		}

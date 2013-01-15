@@ -45,18 +45,18 @@ void drawWorld(World_t *MyWorld) {
 					case 1:
 					case 2: /* BIKE */
 						//NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);
-						mvaddch(x,y,'%');
+						mvaddch(MyWorld->settings.height-y,x,'%');
 						break;
 					case 3: /* tail */
 						//NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);
-						mvaddch(x,y,DRAW_TAIL);
+						mvaddch(MyWorld->settings.height-y,x,DRAW_TAIL);
 						break;
 					case 4: /* bullet */
 						//NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);
-						mvaddch(x,y,DRAW_BULT);
+						mvaddch(MyWorld->settings.height-y,x,DRAW_BULT);
 						break;
 					default:
-						mvaddch(x,y,DRAW_BLNK);
+						mvaddch(MyWorld->settings.height-y,x,DRAW_BLNK);
 						break;					
 				}
 		}

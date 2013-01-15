@@ -786,6 +786,15 @@ void moveTail(World_t *MyWorld, int id, int dir)
 			tail_t *my_tail = &MyWorld->tails[j];
 			upd_tail_t diff = { 0 };
 
+			diff.x = my_tail->cells[my_tail->currentId].x;
+			diff.y = my_tail->cells[my_tail->currentId].y ;
+			if ( diff.x > MyWorld->settings.width )
+				diff.x = 0;
+			if ( diff.y > MyWorld->settings.height )
+				diff.y = 0;
+			setValuesCell(&MyWorld->Field[diff.x][diff.y], EMPTY, id, dir);
+
+
 			diff.x = ( dir == DIR_LEFT ? -1 : dir == DIR_RIGHT ? 1 : 0 );
 			diff.y = ( dir == DIR_UP ? 1 : dir == DIR_DOWN ? -1 : 0 );
 			diff.x += my_tail->cells[my_tail->currentId+1].x;
@@ -793,8 +802,9 @@ void moveTail(World_t *MyWorld, int id, int dir)
 			if ( diff.x > MyWorld->settings.width )
 				diff.x = 0;
 			if ( diff.y > MyWorld->settings.height )
-				diff.y = 1;
+				diff.y = 0;
 
+			setValuesCell(&MyWorld->Field[diff.x][diff.y], TAIL, id, dir);
 			my_tail->cells[my_tail->currentId].x = diff.x;
 			my_tail->cells[my_tail->currentId].y = diff.y;
 			my_tail->currentId++;

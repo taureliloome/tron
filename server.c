@@ -76,12 +76,9 @@ int getValue(char *line)
 int main(int argc, char *argv[])
 {
 	FILE *fd = NULL; // fopen("./server.out", "w+");
-	FILE *fConfig = fopen("./server.config", "r");
-	ReadConfig(fConfig);
 	if ( fd )
 		setOutputType(fd);
 	else
-
 		setOutputType(stderr);
 
 	setLogLevel(LOG_LEVEL_DEBUG);
@@ -90,14 +87,22 @@ int main(int argc, char *argv[])
 	playerFDs = malloc(sizeof(uint8_t) * playerCount);
 	memset(playerTimeout, 0, sizeof(uint8_t) * playerCount);
 	memset(playerFDs, 0, sizeof(uint8_t) * playerCount);
-	if ( argc != 2 )
-	{
-        printf("\n Usage: %s <port of server>\n",argv[0]);
+
+	FILE *fConfig = fopen("./server.config", "r");
+	if (fConfig )
+		ReadConfig(fConfig);
+	else {
+        ERROR("\nConfiguration file \"server.config\" was not found.\n");
 		return 1;
 	}
 
-	init_world(&ServerWorld);
+	if ( argc != 2 )
+	{
+        ERROR("\n Usage: %s <port of server>\n",argv[0]);
+		return 2;
+	}
 
+	init_world(&ServerWorld);
     //TODO: Enable when required sends messages to the list server
     //submitDirSrv(argv);
 
@@ -165,7 +170,7 @@ static void* clientHandler(void *fd)
 		}
 		if ( msg_type == PCKT_EVENT )
 		{
-			DEBUG("<SERVER> Received data from player %d\n", connfd);
+			DEBUG("<SERVER> Received event from player %d\n", connfd);
 			if ( getClientCount() == 5 ) {
 				break;
 			}

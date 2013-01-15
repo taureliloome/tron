@@ -180,12 +180,11 @@ void updateClientWorld(World_t *someWorld,void * packet)
 	void *iterator = packet;
 	int i = 0, k = 0, t = 0;
 
-
+	DEBUG("Decoding Update Message\n");
 	/* Handling player list */
-
 	playerHeader = (upd_player_header_t *) iterator;
 	iterator += sizeof(upd_player_header_t);
-
+	DEBUG("\tHeader playerHeader->playerCount: %u\n", playerHeader->playerCount );
 	for(i = 0 ; i < playerHeader->playerCount; i++){
 		
 		tempPlayer = (upd_player_t *) iterator;
@@ -201,12 +200,14 @@ void updateClientWorld(World_t *someWorld,void * packet)
 
 		iterator += sizeof(upd_player_t);
 	}
+	DEBUG("\tIterations used: %d \n", i);
 
 	/* Handling Bullet list */
 
 	bulletHeader = (upd_bullet_header_t *) iterator;
 	iterator += sizeof(upd_bullet_header_t);
 	
+	DEBUG("\tHeader bulletHeader->bulletCount: %u\n", bulletHeader->bulletCount );
 	for( i = 0; i < bulletHeader->bulletCount; i++){
 		
 		tempBullet = (upd_bullet_t *) iterator;
@@ -222,17 +223,21 @@ void updateClientWorld(World_t *someWorld,void * packet)
 	
 		iterator += sizeof(upd_bullet_t);
 	}
+	DEBUG("\tIterations used: %d \n", i);
 
 	/* Handling tails */
 
 	tailHeader = (upd_total_tail_header_t*) iterator;
 	iterator += sizeof(upd_total_tail_header_t);
 
-	for(i = 0; i < tailHeader->totalTailLength; i++){
+	DEBUG("\tHeader tailHeader->totalTailLength %u\n", tailHeader->totalTailLength );
+	for( i = 0; i < tailHeader->totalTailLength; i++){
 		temptail = (upd_tail_header_t*) iterator;
+		iterator += sizeof(upd_tail_header_t);
+
 		existtail = findtail(someWorld , temptail->id);	
 
-		/*TODO: VEIDOT ASTES UZ SPELETAJA VEIDOSANU	 kkur tur augsa*/
+		/*TODO: VEIDOT ASTES KOPA AR SPELETAJA VEIDOSANU*/
 
 		if(existtail != NULL){  //visas astes ir izveidotas kad tiek veidots speletajs 
 			
@@ -242,12 +247,12 @@ void updateClientWorld(World_t *someWorld,void * packet)
 				tempCell = (upd_tail_t *) iterator;
 				existtail->cells[k].x = tempCell->x;
 				existtail->cells[k].y =	tempCell->y;
-				tempCell += sizeof(upd_tail_t);
+				iterator += sizeof(upd_tail_t);
 			}
 		}
 		
-		iterator += sizeof(upd_tail_header_t);
 	}
+	DEBUG("\tIterations used: %d \n", i);
 
 }
 void init_world(World_t *someWorld)
@@ -256,7 +261,7 @@ void init_world(World_t *someWorld)
 	
 //TODO: remove hardcoded params
 	someWorld->settings.height = 24;    
-    	someWorld->settings.width = 80;
+	someWorld->settings.width = 80;
 
 	if (someWorld->settings.height >= someWorld->settings.width)
 		maxSide = someWorld->settings.height;
@@ -314,7 +319,7 @@ void * getUpdateMessage(World_t *someWorld, size_t *length)
 		return NULL;
 	}
 		
-	void *packet,*tailPacket;
+	void *packet, *iterator, *tailPacket;
 
 	upd_player_header_t plHeader; //speletaju galvene
 	upd_player_t *tempPlayer, *playerList; // speletajs no pasaules;  speletaju saraksts aizsutisanai
@@ -384,7 +389,7 @@ void * getUpdateMessage(World_t *someWorld, size_t *length)
 	/* tail packet to store header and list of cells of each tail */
 
 	alloc_size = sizeof(upd_tail_t) * cellLengthSumm + sizeof(upd_tail_header_t) * someWorld->tailCountAlive;
-	if ( alloc_size >= sizeof(upd_tail_t) * cellLengthSumm + sizeof(upd_tail_header_t) * someWorld->tailCountAlive )
+	if ( alloc_size >= sizeof(upd_tail_header_t) )
 	{
 		tailPacket = malloc(alloc_size);
 		size += alloc_size;
@@ -411,37 +416,33 @@ void * getUpdateMessage(World_t *someWorld, size_t *length)
 
 	/* Calculating length of final packet */
 
-	packet = malloc( size );
+	iterator = packet = malloc( size );
 	
-	memcpy(packet, &plHeader, sizeof( &plHeader) );
-	packet+=sizeof(&plHeader);
+	memcpy(iterator, &plHeader, sizeof(plHeader) );
+	iterator += sizeof(&plHeader);
 
 	if ( playerList ) {
-		memcpy( packet, playerList, sizeof(playerList) );
-		packet += sizeof( playerList );
-	}
-	
-	if ( playerList ) {
-		memcpy( packet, &blHeader, sizeof(&blHeader) );
-		packet += sizeof(&blHeader);
-	}
-
-	if ( playerList ) {
-		memcpy( packet , bulletList, sizeof(bulletList) );
-		packet += sizeof( bulletList );
+		memcpy( iterator, playerList, sizeof(*playerList) );
+		iterator += sizeof( playerList );
 	}
 	
-	if ( playerList ) {
-		memcpy( packet , &totaltailHeader, sizeof(&totaltailHeader) );
-		packet += sizeof(&totaltailHeader);
+	memcpy( iterator, &blHeader, sizeof(blHeader) );
+	iterator += sizeof(&blHeader);
+
+	if ( bulletList ) {
+		memcpy( iterator , bulletList, sizeof(*bulletList) );
+		iterator += sizeof( bulletList );
+	}
+	
+	memcpy( iterator , &totaltailHeader, sizeof(totaltailHeader) );
+	iterator += sizeof(&totaltailHeader);
+
+	if ( tailPacket ) {
+		memcpy(iterator, tailPacket, sizeof(*tailPacket) );
+		iterator += sizeof( tailPacket );
 	}
 
-	if ( playerList ) {
-		memcpy(packet, tailPacket, sizeof(tailPacket) );
-		size += sizeof( tailPacket );
-	}
-
-	*length = sizeof( packet);
+	*length = size;
 	return packet;
 }
 
@@ -723,35 +724,6 @@ void MoveBullets(World_t *MyWorld)
 				}
 				
 			}
-/*
-				if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
-					[Bullets[i].y+gety(Bullets[i].direction)].type != EMPTY)
-				{
-					if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
-						[Bullets[i].y+gety(Bullets[i].direction)].type == BULLET)
-					{
-						
-					}
-					else
-					if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
-						[Bullets[i].y+gety(Bullets[i].direction)].type == tail)
-					{
-	
-					}
-					else
-					if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
-						[Bullets[i].y+gety(Bullets[i].direction)].type == HEAD)
-					{
-					}
-
-				}
-				else
-				if ((MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
-					[Bullets[i].y+gety(Bullets[i].direction)]).type == HEAD)
-				{
-
-				}
-*/
 			
 	}	
 }
@@ -800,138 +772,6 @@ void MovePlayers(World_t *MyWorld)
 		}
 	}	
 }
-
-#if 0
-void CreateServerWorld(World *someWorld)
-{
-	int maxSide = 0, bulletMultiplier = 0;
-	MyWorld=someWorld;
-	
-	MyWorld->Bikes;
-    	MyWorld->height=80;           
-    	MyWorld->width=20;            
-	MyWorld->tailLength=10;
-	MyWorld->frameRate=60;
-	MyWorld->bulletSpeed=2;
-	MyWorld->bulletCooldown=20;
-	MyWorld->bulletCountAlive=0;
-	MyWorld->timeout=100;
-	MyWorld->playerCount=4;
-	MyWorld->playerCountAlive=0;
-	bulletMultiplier = maxSide/(MyWorld->bulletCooldown*MyWorld->bulletSpeed);
-	if (maxSide%(MyWorld->bulletCooldown*MyWorld->bulletSpeed)>0)
-		bulletMultiplier++;
-	MyWorld->bulletCount=bulletMultiplier*MyWorld->playerCount;
-	MyWorld->Field=(WorldCell**)malloc(MyWorld->width * sizeof(WorldCell*));
-	MyWorld->Players= (UpdatePlayer*)malloc(MyWorld->playerCount * sizeof(UpdatePlayer*));
-	MyWorld->Bullets=(UpdateBullet*)malloc(bulletMultiplier * sizeof(UpdateBullet*));
-}
-
-void addNewPlayer(int ID)
-{
-	
-}
-void CreateClientWorld(World *someWorld,ConnectionResponse * Params)
-{
-	int maxSide = 0, bulletMultiplier = 0;
-	MyWorld=someWorld;
-	MyWorld->playerCountAlive=0;
-	MyWorld->Field = (WorldCell**)malloc(Params->WIDTH * sizeof(WorldCell*));
-    for (k = 0; k < Params->WIDTH; k++) 
-    {
-		memset(MyWorld->Field[k], 0, sizeof(WorldCell*));
-    }
-	MyWorld->height=Params->height;	
-	MyWorld->width=Params->width;
-    MyWorld->Players = (UpdatePlayer*)malloc(Params->playerCount * sizeof(UpdatePlayer*));
-	if (MyWorld->height>=MyWorld->width)
-		maxSide = MyWorld->height;
-	else
-		maxSide = MyWorld->width;
-	MyWorld->tailLength=Params->tailLength
-	MyWorld->frameRate=Params->frameRate;
-	MyWorld->bulletSpeed=Params->bulletSpeed;
-	MyWorld->bulletCooldown=Params->bulletCooldown;
-	MyWorld->timeout=Params->timeout;	
-	MyWorld->playerCount=Params->playerCount;
-	bulletMultiplier = maxSide/(MyWorld->bulletCooldown*MyWorld->bulletSpeed);
-	if (maxSide%(MyWorld->bulletCooldown*MyWorld->bulletSpeed)>0)
-		bulletMultiplier++;
-	MyWorld->bulletCount=bulletMultiplier*MyWorld->playerCount;
-	MyWorld->Bullets=(UpdateBullet*)malloc(bulletMultiplier * sizeof(UpdateBullet*));
-	for (i=0;i<MyWorld->bulletCount;i++)
-		MyWorld->Bullets[i]->direction = -1;
-};
-
-void bulletFree(int PlayerID, int x, int y)
-{
-	int i;
-	for (i=(MyWorld->bulletCount/MyWorld->playerCount)*PlayerID;i<MyWorld->bulletCount;i++)
-		if (MyWorld->Bullets->id == PlayerdID && MyWorld->Bullets->x == x && MyWorld->Bullets->y == y)
-		{
-			MyWorld->Bullets[i]->direction = -1;
-			MyWorld->bulletCountAlive--;
-			free(MyWorld->Field[x][y]);
-		}
-}
-int findPlayer(int playerID)
-{
-	int i=0;	
-	for(i=0;i<MyWorld->playerCount;i++)
-	{
-		if(MyWorld->Players[i]->id==playerID) return 1;
-	}	
-	return 0;
-}
-void GetBullet(int PlayerID, int x, int y, int dir)
-{
-	for (i=(MyWorld->bulletCount/MyWorld->playerCount)*PlayerID;i<MyWorld->bulletCount;i++)
-		if (MyWorld->Bullets[i]->direction > -1)
-		{	
-			MyWorld->Bullets[i]->direction = dir;
-			MyWorld->Bullets[i]->x = x;
-			MyWorld->Bullets[i]->y = y;
-			MyWorld->Bullets[i]->ID = PlayerID;
-			MyWorld->bulletCountAlive++;
-			MyWorld->Field[x][y]=(WorldCell*)malloc(sizeof(WorldCell*));
-			MyWorld->Field[x][y]->x = x;
-			MyWorld->Field[x][y]->y = y;
-			MyWorld->Field[x][y]->direction = dir;
-			MyWorld->Field[x][y]->id = PlayerID;
-			MyWorld->Field[x][y]->type = BULLET;
-		}
-}
-
-void collision()
-{
-	
-};
-
-void UpdateWorld(void * Params)
-{
-	upd_player_header_t * plHeader=Params;
-	upd_player_t * player;	
-	int i=0;	
-	for(i=0;i<plHeader->playerCount;i++)
-	{
-		player=Params+sizeof(UpdatePlayerHeader);
-		if(!findPlayer(player->id))
-		{
-			//TODO: CJ`s id gens goes here
-			MyWorld->Players[MyWorld->playerCountAlive]->
-			MyWorld->playerCountAlive++;
-		}
-	}
-	
-}
-
-void *GetWorldStatus(size_t *len)
-{
-	int playercount = MyWorld->playerCount;
-	int bulletcount = MyWorld->bulletCountAlive;
-}
-
-#endif
 
 #endif /* _WORLD_H_ */
 

@@ -38,10 +38,10 @@ static World_t ServerWorld;
 
 int main(int argc, char *argv[])
 {
-	FILE *fd = fopen("./server.out", "w+");
-	//if ( fd )
-	//	setOutputType(fd);
-	//else
+	FILE *fd = NULL; // fopen("./server.out", "w+");
+	if ( fd )
+		setOutputType(fd);
+	else
 		setOutputType(stderr);
 
 	setLogLevel(LOG_LEVEL_ALL);

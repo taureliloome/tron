@@ -820,7 +820,7 @@ void moveTail(World_t *MyWorld, int id, int dir)
 
 void MovePlayers(World_t *MyWorld)
 {
-	int i, j, xd, yd, id, tx, ty;
+	int i, j, xd, yd, id, tx, ty, tdir;
 	int *x, *y, dir;
 	upd_player_t *CurPlayers;
 	CurPlayers = getSelf(MyWorld);
@@ -844,16 +844,30 @@ void MovePlayers(World_t *MyWorld)
 			switch(MyWorld->Field[xd][yd].type)
 			{
 				case EMPTY://Ja nekas mocim nav prieksa tad pabidam moci uz prieksu
-					tx-=getx(MyWorld->Field[tx][ty].dir);//Dabun moca aizmugures x coord
-					ty-=gety(MyWorld->Field[tx][ty].dir);//Dabun moca aizmugures y coord
+					tdir = MyWorld->Field[tx][ty].dir;
+//					if (getx(tdir) == 1)
+//						tx+=-1;
+//					else
+//					if (getx(tdir) == -1)
+//						tx+=1;
+//					if (gety(tdir) == 1)
+//						ty+=1;
+//					else
+//					if (gety(tdir) == -1)
+//						ty+=-1;
+					//mvaddch(5,20,tdir);
+					tx+=(getx(tdir) * -1);//Dabun moca aizmugures x coord
+					ty+=(gety(tdir) * -1);//Dabun moca aizmugures y coord
 					setValuesCell(&MyWorld->Field[tx][ty], EMPTY, -1, -1);//izdzes speletaja moca aizmugures datus
-					moveTail(MyWorld, CurPlayers[i].id, MyWorld->Field[tx][ty].dir);
-					tx+=getx(MyWorld->Field[tx][ty].dir);//Dabun moca prieksas x coord
-					ty+=gety(MyWorld->Field[tx][ty].dir);//Dabun moca prieksas y coord
-					setValuesCell(&MyWorld->Field[tx][ty], BACK, dir, CurPlayers[i].id);//Pamaina veco prieksu uz aizmuguri
+					//moveTail(MyWorld, CurPlayers[i].id, MyWorld->Field[tx][ty].dir);
+					tdir = MyWorld->Field[tx][ty].dir;
+					//if (tdir == 3)					
+						//setValuesCell(&MyWorld->Field[*x][*y], BACK, dir, CurPlayers[i].id);//Pamaina veco prieksu uz aizmuguri
+					//setValuesCell(&MyWorld->Field[tx][ty], EMPTY, dir, CurPlayers[i].id);
 					*x = xd;
 					*y = yd;
-					setValuesCell(&MyWorld->Field[*x][*y], HEAD, dir, CurPlayers[i].id);//Pieliek jauno prieksu
+					setValuesCell(&MyWorld->Field[*x][*y], HEAD, dir, CurPlayers[i].id);//Pieliek jauno prieksu	
+					//setValuesCell(&MyWorld->Field[*x][*y], EMPTY, dir, CurPlayers[i].id);
 					break;
 				case HEAD://Ja mocis ietriecas moca galva tad abus mocus izdzes
 					DeletePlayer(MyWorld, &CurPlayers[0], MyWorld->tails, i, MyWorld->settings.playerCount);
@@ -895,7 +909,7 @@ void calculateField(World_t * world)
 	clearField(world);
 //DEBUG("i: %d direction: %d",player->id , player->direction);
 	MovePlayers(world);
-	world->Field[x][y].type = HEAD;
+	//world->Field[x][y].type = HEAD;
 }
 #endif /* _WORLD_H_ */
 

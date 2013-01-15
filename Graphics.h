@@ -42,16 +42,18 @@ void drawWorld(World_t *MyWorld) {
 		for ( y = 0; y < MyWorld->settings.height; y++ ) {
 			tempCell = MyWorld->Field[x][y];
 				switch ( tempCell.type ) {
-					case 1:
-					case 2: /* BIKE */
-						//NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);
-						mvaddch(MyWorld->settings.height-y,x,'%');
+					case HEAD:
+						mvaddch(MyWorld->settings.height-y,x,'<');
 						break;
-					case 3: /* tail */
+					case BACK: /* BIKE */
+						//NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);
+						mvaddch(MyWorld->settings.height-y,x,'>');
+						break;
+					case TAIL: /* tail */
 						//NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);
 						mvaddch(MyWorld->settings.height-y,x,DRAW_TAIL);
 						break;
-					case 4: /* bullet */
+					case BULLET: /* bullet */
 						//NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);
 						mvaddch(MyWorld->settings.height-y,x,DRAW_BULT);
 						break;

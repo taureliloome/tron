@@ -137,7 +137,6 @@ int main(int argc, char *argv[])
 			 	DEBUG("Sending update event { %d, %d } to server \n", event.direction, event.shot );
 	    	}
 #endif
-			MovePlayers(&game);
 			calculateField(&game);
 			drawWorld(&game);
 			//getchar();

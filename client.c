@@ -36,7 +36,7 @@ static	World_t game;
 int main(int argc, char *argv[])
 {
 	int counter=0;
-	FILE *fd = NULL;fopen("./client.out", "w+");
+	FILE *fd = fopen("./client.out", "w+");
 	if ( fd != NULL )
 		setOutputType(fd);
 	else

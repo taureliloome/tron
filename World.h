@@ -24,28 +24,27 @@ typedef enum Objects{
 typedef struct WorldCell {
 	uint32_t x;
 	uint32_t y;
-    	uint32_t type;      //Šūnas tips
-    	uint32_t id;	//Spēlētaja id, kuram pieder objekts 
+	uint32_t type;      //Šūnas tips
+	uint32_t id;	//Spēlētaja id, kuram pieder objekts 
 	uint32_t dir;
-}__attribute__((packed)) WorldCell_t ;
+}__attribute__((packed)) WorldCell_t;
 
-typedef struct tail{
-	uint32_t length; //Vienas astes tekošais garums;
-	uint32_t playerId;  //saimnieka ID;
+typedef struct tail_s{
+	uint32_t length; 		//Vienas astes tekošais garums;
+	uint32_t playerId;  	//saimnieka ID;
 	uint32_t currentId;
-	upd_tail_t* cells; //massivs ar astes šūnām;  ja aste dead -1,-1
+	upd_tail_t* cells;		//massivs ar astes šūnām;  ja aste dead -1,-1
 	
 }tail_t;
 
-typedef struct World {
+typedef struct world_s {
 	WorldCell_t Field[80][24];	/* Divdimensiju masivs ar noradem uz objektu kurš aizņem konkrētu šunu. */
 	upd_player_t *Players;		/* Visu spēlētāju objektu pūls. Satur koordinātes, virzienu utl. */
 	upd_bullet_t *Bullets;		/* Visu iespējamo ložu pūls. */
 
-	Tail_t *tails;		/* Spēlētāju astes */
+	tail_t *tails;				/* Spēlētāju astes */
 
-	/* Pasaules configurācija */
-	conn_resp_t settings;
+	conn_resp_t settings;     	/* Pasaules configurācija */
 
 	uint32_t bulletCountMax;
 	uint32_t bulletCountAlive;
@@ -55,11 +54,11 @@ typedef struct World {
 
 void update_player_tail(World_t *someWorld, uint32_t playerId)
 {
-	tail_t *my_tail = someWorld->tails[playerId];
-	my_tail->cells[my_tail->currentId].x = my_tail->cells[my_tail->currentId+1].x + diff.x;
-	my_tail->cells[my_tail->currentId].y = my_tail->cells[my_tail->currentId+1].y + diff.y;
-	currentId++;
-	if ( my_tail->currentId >= sizeof(my_tail) \ sizeof(tail_t) )
+	tail_t *my_tail = &someWorld->tails[playerId];
+	my_tail->cells[my_tail->currentId].x = my_tail->cells[my_tail->currentId+1].x + 0;
+	my_tail->cells[my_tail->currentId].y = my_tail->cells[my_tail->currentId+1].y + 0;
+	my_tail->currentId++;
+	if ( my_tail->currentId >= sizeof(my_tail) / sizeof(tail_t) )
 		my_tail->currentId = 0;
 }
 
@@ -68,21 +67,21 @@ upd_player_t* getSelf(World_t *MyWorld)
 	return MyWorld->Players;   // Jo massiva [0] elements ir vienads ar pointera adresi
 }
 
-Tail_t * createTail(World_t *someWorld, int id)
+tail_t * createtail(World_t *someWorld, int id)
 {
 	int tailCount = someWorld->tailCountAlive;
 	if(someWorld->tailCountAlive < someWorld->playerCountAlive){
 
 		int i = 0; 
-		someWorld->Tails[tailCount].playerId = id;
-		someWorld->Tails[tailCount].length = 0;
-		someWorld->Tails[tailCount].cells = malloc( sizeof(upd_tail_t) * someWorld->settings.tailLength);
+		someWorld->tails[tailCount].playerId = id;
+		someWorld->tails[tailCount].length = 0;
+		someWorld->tails[tailCount].cells = malloc( sizeof(upd_tail_t) * someWorld->settings.tailLength);
 
 		for(i; i < someWorld->settings.tailLength; i++)
-			someWorld->Tails[tailCount].cells[i].x = someWorld->Tails[tailCount].cells[i].y = -1;
+			someWorld->tails[tailCount].cells[i].x = someWorld->tails[tailCount].cells[i].y = -1;
 
 		someWorld->tailCountAlive++;
-		return &someWorld->Tails[tailCount];
+		return &someWorld->tails[tailCount];
 	}
 	return NULL;
 }
@@ -150,16 +149,16 @@ upd_bullet_t * findBullet(World_t *someWorld, int bulletId)
 	return NULL;
 }
 
-Tail_t * findTail(World_t *someWorld , int tailId)
+tail_t * findtail(World_t *someWorld , int tailId)
 {
 	int i = 0;
-	Tail_t tl;
+	tail_t tl;
 	for(i = 0 ; i < someWorld->tailCountAlive; i++)
 	{
-		tl = someWorld->Tails[i];
+		tl = someWorld->tails[i];
 		if(tl.playerId == tailId)
 		{
-			return &someWorld->Tails[i];
+			return &someWorld->tails[i];
 		}
 	}
 	return NULL;
@@ -174,9 +173,9 @@ void updateClientWorld(World_t *someWorld,void * packet)
 	upd_bullet_t *tempBullet, *existBullet;
 
 	upd_total_tail_header_t *tailHeader;
-	upd_tail_header_t *tempTail;
+	upd_tail_header_t *temptail;
 	upd_tail_t *tempCell;
-	Tail_t *existTail;
+	tail_t *existtail;
 
 	void *iterator = packet;
 	int i = 0, k = 0, t = 0;
@@ -230,19 +229,19 @@ void updateClientWorld(World_t *someWorld,void * packet)
 	iterator += sizeof(upd_total_tail_header_t);
 
 	for(i = 0; i < tailHeader->totalTailLength; i++){
-		tempTail = (upd_tail_header_t*) iterator;
-		existTail = findTail(someWorld , tempTail->id);	
+		temptail = (upd_tail_header_t*) iterator;
+		existtail = findtail(someWorld , temptail->id);	
 
 		/*TODO: VEIDOT ASTES UZ SPELETAJA VEIDOSANU	 kkur tur augsa*/
 
-		if(existTail != NULL){  //visas astes ir izveidotas kad tiek veidots speletajs 
+		if(existtail != NULL){  //visas astes ir izveidotas kad tiek veidots speletajs 
 			
-			existTail->length = tempTail->tailCount;
+			existtail->length = temptail->tailCount;
 			
-			for( k = 0; k < tempTail->tailCount; k++){
+			for( k = 0; k < temptail->tailCount; k++){
 				tempCell = (upd_tail_t *) iterator;
-				existTail->cells[k].x = tempCell->x;
-				existTail->cells[k].y =	tempCell->y;
+				existtail->cells[k].x = tempCell->x;
+				existtail->cells[k].y =	tempCell->y;
 				tempCell += sizeof(upd_tail_t);
 			}
 		}
@@ -374,7 +373,7 @@ void * getUpdateMessage(World_t *someWorld, size_t *length)
 	
 	/* Creating packet with list of tail */
 	
-	totaltailHeader.totaltailLength = someWorld->tailCountAlive;	
+	totaltailHeader.totalTailLength = someWorld->tailCountAlive;	
 	temptail = &someWorld->tails[0];
 
 	for(i = 0; i < someWorld->tailCountAlive; i++)
@@ -467,7 +466,7 @@ void CreateClientWorld(World_t *someWorld,conn_resp_t * Params)
 
 	createPlayer(someWorld , Params->id,40,10); //izveidojam pirmo speletaju, to kuru vadis tekošais klients
 
-	createTail(someWorld, Params->id); //izveidojam vinam asti garuma 0
+	createtail(someWorld, Params->id); //izveidojam vinam asti garuma 0
 
 
 

@@ -37,7 +37,8 @@ int idGen(int id, int player_count, int* list)
     for(i=0; i<player_count; i++){
         if(list[i]==-1){
             list[i]=id;
+			return i;
         }
     }
-    return i;
+    return -1;
 }

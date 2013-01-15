@@ -141,7 +141,7 @@ uint8_t SendMessage(int sendfd, void * buf, size_t len, uint8_t msg_type)
 		perror("Unable to send msg");
 		return 0;
 	}
-	NOTICE("Message sent type: %u; len:%u\n",msg_type, (uint32_t) len);
+	DEBUG2("Message sent type: %u; len:%u\n",msg_type, (uint32_t) len);
 	return 1;
 }
 
@@ -159,7 +159,7 @@ void *RecieveMessage(int readfd, uint8_t *msg_type, uint8_t *timeout)
 	uint32_t received = 0;	
 	struct timeval m_timeout;
 	m_timeout.tv_sec = 0;
-	m_timeout.tv_usec = 10000;
+	m_timeout.tv_usec = 100;
 
 	fd_set set;
 	FD_ZERO(&set);

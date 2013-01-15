@@ -88,6 +88,7 @@ int main(int argc, char *argv[])
 	memset(playerTimeout, 0, sizeof(uint8_t) * playerCount);
 	memset(playerFDs, 0, sizeof(uint8_t) * playerCount);
 
+	memset(&ServerWorld, 0, sizeof(ServerWorld));
 	FILE *fConfig = fopen("./server.config", "r");
 	if (fConfig )
 		ReadConfig(fConfig);
@@ -111,8 +112,8 @@ int main(int argc, char *argv[])
 	waitForPlayers(ServerWorld.settings.playerCount, listenfd);
 
 	close(listenfd);
-	free(playerTimeout);
 	free(playerFDs);
+	free(playerTimeout);
 	return 0;
 }
 
@@ -158,10 +159,7 @@ static void* clientHandler(void *fd)
 
 	while(1) {
 		RecieveMessage(connfd, &msg_type, &playerTimeout[conn_resp.id]);
-
-
 		upd_pkt = getUpdateMessage(&ServerWorld, &upd_pkt_len);
-
 		SendMessage(connfd, upd_pkt, upd_pkt_len, PCKT_UPDATE);
 		if ( playerTimeout[conn_resp.id] >= 5 )
 		{
@@ -177,6 +175,7 @@ static void* clientHandler(void *fd)
 		}
 		//TODO update local structs with received data.
 	}
+	DEBUG("<SERVER> Player %d session ended\n", conn_resp.id);
     close(connfd);
 }
 

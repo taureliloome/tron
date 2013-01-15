@@ -52,16 +52,6 @@ typedef struct world_s {
 	uint32_t tailCountAlive;
 }World_t;
 
-void update_player_tail(World_t *someWorld, uint32_t playerId)
-{
-	tail_t *my_tail = &someWorld->tails[playerId];
-	my_tail->cells[my_tail->currentId].x = my_tail->cells[my_tail->currentId+1].x + 0;
-	my_tail->cells[my_tail->currentId].y = my_tail->cells[my_tail->currentId+1].y + 0;
-	my_tail->currentId++;
-	if ( my_tail->currentId >= sizeof(my_tail) / sizeof(tail_t) )
-		my_tail->currentId = 0;
-}
-
 upd_player_t* getSelf(World_t *MyWorld)
 {
 	return MyWorld->Players;   // Jo massiva [0] elements ir vienads ar pointera adresi
@@ -246,8 +236,6 @@ void updateClientWorld(World_t *someWorld,void * packet)
 
 		existtail = findtail(someWorld , temptail->id);	
 
-		/*TODO: VEIDOT ASTES KOPA AR SPELETAJA VEIDOSANU*/
-
 		if(existtail != NULL){  //visas astes ir izveidotas kad tiek veidots speletajs 
 			
 			existtail->length = temptail->tailCount;
@@ -280,6 +268,7 @@ void init_world(World_t *someWorld)
 
 	/* Pasaules konfigurācija */
 
+	someWorld->settings.id = 0;
 	someWorld->settings.timeout = 100;
 	someWorld->settings.frameRate = 2;
 	someWorld->settings.bulletSpeed = 4;
@@ -464,7 +453,7 @@ void CreateClientWorld(World_t *someWorld,conn_resp_t * Params)
 	int k,i;
 	WorldCell_t tempCell;
 	someWorld->settings = *Params;
-	//someWorld->Players = (upd_player_t*)malloc(someWorld->settings.playerCount * sizeof(upd_player_t));
+	someWorld->settings.id = 0;
 	
 //	someWorld->Field = malloc(Params->width * Params->height * sizeof(void**));
 //
@@ -787,31 +776,33 @@ void DeletePlayerID(World_t *MyWorld, upd_player_t *Player, tail_t *Tails, int c
 	}
 }
 
-void moveTail(World_t *MyWorld, tail_t *Tails, int id, int x, int y, int count, int dir)
+void moveTail(World_t *MyWorld, int id, int dir)
 {
-	int j, k, tx, ty;
-	for (j=0;j<count;j++)//Atrod speletaja asti
+	int j = 0;
+	for (j=0;j<MyWorld->settings.playerCount;j++)//Atrod speletaja asti
 	{
-		if (Tails[j].playerId == id)
+		if (MyWorld->tails[j].playerId == id)
 		{
-			setValuesCell(&MyWorld->Field[x][y], TAIL, id, dir);
-			for (k=0;k<Tails[j].length-1;k++)//Pabida asti uz prieksu
-			{
-				tx = Tails[j].cells[k].x;
-				ty = Tails[j].cells[k].y;
-				Tails[j].cells[k].x = x;
-				Tails[j].cells[k].y = y;
-				x = tx;
-				y = ty;
-			}
-			if (Tails[j].length == MyWorld->settings.tailLength)
-			{
-				setValuesCell(&MyWorld->Field[Tails[j].cells[Tails[j].length].x][Tails[j].cells[Tails[j].length].y], EMPTY, -1, -1);
-			}
-			else
-			{
-				Tails[j].length++;
-			}
+			tail_t *my_tail = &MyWorld->tails[j];
+			upd_tail_t diff = { 0 };
+
+			diff.x = ( dir == DIR_LEFT ? -1 : dir == DIR_RIGHT ? 1 : 0 );
+			diff.y = ( dir == DIR_UP ? 1 : dir == DIR_DOWN ? -1 : 0 );
+			diff.x += my_tail->cells[my_tail->currentId+1].x;
+			diff.y += my_tail->cells[my_tail->currentId+1].y;
+			if ( diff.x > MyWorld->settings.width )
+				diff.x = 0;
+			if ( diff.y > MyWorld->settings.height )
+				diff.y = 1;
+
+			my_tail->cells[my_tail->currentId].x = diff.x;
+			my_tail->cells[my_tail->currentId].y = diff.y;
+			my_tail->currentId++;
+			setValuesCell(&MyWorld->Field[diff.x][diff.y], TAIL, id, dir);
+
+			if ( my_tail->currentId >= sizeof(*my_tail) / sizeof(tail_t) )
+				my_tail->currentId = 0;
+
 			break;//Iziet no astes meklesanas cikla
 		}
 	}
@@ -846,7 +837,7 @@ void MovePlayers(World_t *MyWorld)
 					tx-=getx(MyWorld->Field[tx][ty].dir);//Dabun moca aizmugures x coord
 					ty-=gety(MyWorld->Field[tx][ty].dir);//Dabun moca aizmugures y coord
 					setValuesCell(&MyWorld->Field[tx][ty], EMPTY, -1, -1);//izdzes speletaja moca aizmugures datus
-					moveTail(MyWorld, MyWorld->tails, CurPlayers[i].id, tx, ty, MyWorld->settings.playerCount, MyWorld->Field[tx][ty].dir);
+					moveTail(MyWorld, CurPlayers[i].id, MyWorld->Field[tx][ty].dir);
 					tx+=getx(MyWorld->Field[tx][ty].dir);//Dabun moca prieksas x coord
 					ty+=gety(MyWorld->Field[tx][ty].dir);//Dabun moca prieksas y coord
 					setValuesCell(&MyWorld->Field[tx][ty], BACK, dir, CurPlayers[i].id);//Pamaina veco prieksu uz aizmuguri

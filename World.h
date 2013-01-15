@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include "packets.h"
 
-
+ 
 
 /* Object type enumerator */
 typedef enum Objects{
@@ -67,7 +67,7 @@ upd_player_t* getSelf(World_t *MyWorld)
 	return MyWorld->Players;   // Jo massiva [0] elements ir vienads ar pointera adresi
 }
 
-tail_t * createtail(World_t *someWorld, int id)
+tail_t * createTail(World_t *someWorld, int id)
 {
 	int tailCount = someWorld->tailCountAlive;
 	if(someWorld->tailCountAlive < someWorld->playerCountAlive){
@@ -96,7 +96,7 @@ upd_player_t * createPlayer(World_t *someWorld, int id,int x,int y)
 		someWorld->Players[pc].y = y;
 		someWorld->Players[pc].direction = DIR_UP;
 		someWorld->Players[pc].cooldown = 0;         // Lodes cooldown (Kadros)
-	    	someWorld->Players[pc].gameover = 1;         // 1 - miris, 0 - spēlē
+	    	someWorld->Players[pc].gameover = 0;         // 1 - miris, 0 - spēlē
 
 		someWorld->playerCountAlive++;
 
@@ -180,11 +180,13 @@ void updateClientWorld(World_t *someWorld,void * packet)
 	void *iterator = packet;
 	int i = 0, k = 0, t = 0;
 
+
 	DEBUG2("Decoding Update Message\n");
 	/* Handling player list */
 	playerHeader = (upd_player_header_t *) iterator;
 	iterator += sizeof(upd_player_header_t);
 	DEBUG2("\tHeader playerHeader->playerCount: %u\n", playerHeader->playerCount );
+
 	for(i = 0 ; i < playerHeader->playerCount; i++){
 		
 		tempPlayer = (upd_player_t *) iterator;
@@ -200,6 +202,7 @@ void updateClientWorld(World_t *someWorld,void * packet)
 
 		iterator += sizeof(upd_player_t);
 	}
+
 	DEBUG2("\tIterations used: %d \n", i);
 
 	/* Handling Bullet list */
@@ -207,7 +210,9 @@ void updateClientWorld(World_t *someWorld,void * packet)
 	bulletHeader = (upd_bullet_header_t *) iterator;
 	iterator += sizeof(upd_bullet_header_t);
 	
+
 	DEBUG2("\tHeader bulletHeader->bulletCount: %u\n", bulletHeader->bulletCount );
+
 	for( i = 0; i < bulletHeader->bulletCount; i++){
 		
 		tempBullet = (upd_bullet_t *) iterator;
@@ -223,14 +228,18 @@ void updateClientWorld(World_t *someWorld,void * packet)
 	
 		iterator += sizeof(upd_bullet_t);
 	}
+
 	DEBUG2("\tIterations used: %d \n", i);
+
 
 	/* Handling tails */
 
 	tailHeader = (upd_total_tail_header_t*) iterator;
 	iterator += sizeof(upd_total_tail_header_t);
 
+
 	DEBUG2("\tHeader tailHeader->totalTailLength %u\n", tailHeader->totalTailLength );
+
 	for( i = 0; i < tailHeader->totalTailLength; i++){
 		temptail = (upd_tail_header_t*) iterator;
 		iterator += sizeof(upd_tail_header_t);
@@ -252,6 +261,7 @@ void updateClientWorld(World_t *someWorld,void * packet)
 		}
 		
 	}
+
 	DEBUG2("\tIterations used: %d \n", i);
 
 }
@@ -359,6 +369,7 @@ void * getUpdateMessage(World_t *someWorld, size_t *length)
 	/* Creating packet with list of bullets */
 
 	blHeader.bulletCount = someWorld->bulletCountAlive;
+	//DEBUG("BULLETHEADER->BULLETCOUNT: %d\n",blHeader.bulletCount);
 	size += sizeof(&blHeader);
 
 	alloc_size = someWorld->bulletCountAlive * sizeof(upd_bullet_t);
@@ -452,13 +463,9 @@ void CreateClientWorld(World_t *someWorld,conn_resp_t * Params)
 {
 	int k,i;
 	WorldCell_t tempCell;
-	someWorld->settings.height=Params->height;
-	someWorld->settings.width=Params->width;
-
-	someWorld->Players = (upd_player_t*)malloc(someWorld->settings.playerCount * sizeof(upd_player_t));
-	createPlayer(someWorld , Params->id,40,10); //izveidojam pirmo speletaju, to kuru vadis tekošais klients
-	createtail(someWorld, Params->id); //izveidojam vinam asti garuma 0
-
+	someWorld->settings = *Params;
+	//someWorld->Players = (upd_player_t*)malloc(someWorld->settings.playerCount * sizeof(upd_player_t));
+	
 //	someWorld->Field = malloc(Params->width * Params->height * sizeof(void**));
 //
 //   	for (k = 0; k < Params->width; k++) 
@@ -475,6 +482,11 @@ void CreateClientWorld(World_t *someWorld,conn_resp_t * Params)
 	someWorld->Players = malloc(someWorld->settings.playerCount * sizeof(upd_player_t));
 	someWorld->Bullets = malloc(someWorld->bulletCountMax * sizeof(upd_bullet_t));
 	someWorld->tails = malloc(someWorld->settings.playerCount * sizeof(tail_t));
+	for(i = 0;i < someWorld->settings.playerCount; i++)
+	{
+		someWorld->Players[i].gameover=1;
+	}
+	
 	for ( i = 0; i < someWorld->settings.tailLength; i++ )
 	{
 		someWorld->tails[i].cells = (upd_tail_t *) malloc(someWorld->settings.tailLength);
@@ -491,6 +503,10 @@ void CreateClientWorld(World_t *someWorld,conn_resp_t * Params)
 			someWorld->Field[i][k].dir	= DIR_MAX;
 		}
 	}
+
+	createPlayer(someWorld , Params->id,40,10); //izveidojam pirmo speletaju, to kuru vadis tekošais klients
+	createTail(someWorld, Params->id); //izveidojam vinam asti garuma 0
+
 }
 
 
@@ -502,15 +518,19 @@ void ClientMove(int c, World_t *MyWorld)
 	{
 		case 'w':
 			CurPlayer->direction = DIR_UP;
+			//DEBUG("W\n");
 			break;
 		case 's':
 			CurPlayer->direction = DIR_DOWN;
+			//DEBUG("s\n");			
 			break;
 		case 'a':
 			CurPlayer->direction = DIR_LEFT;
+			//DEBUG("a\n");
 			break;
 		case 'd':
 			CurPlayer->direction = DIR_RIGHT;
+			//DEBUG("D\n");			
 			break;
 		case 'q':
 			//izdomaat par quit
@@ -533,9 +553,9 @@ int gety(uint32_t dir)
 {
 	if (dir==DIR_LEFT || dir==DIR_RIGHT)
 		return 0;
-	if (dir==DIR_LEFT)
+	if (dir==DIR_DOWN)
 		return -1;
-	if (dir==DIR_RIGHT)
+	if (dir==DIR_UP)
 		return 1;
 	return 0;
 }
@@ -855,6 +875,26 @@ void MovePlayers(World_t *MyWorld)
 		}
 	}	
 }
-
+void clearField(World_t * world)
+{
+	int i = 0, k = 0;
+	for(i; i < world->settings.width; i++)
+	{
+		for(k; k < world->settings.height; k++)
+		{
+			world->Field[i][k].type=EMPTY;
+		}
+	}
+}
+void calculateField(World_t * world)
+{
+	upd_player_t * player = getSelf(world);
+	int x = player->x;
+	int y = player->y;
+	clearField(world);
+//DEBUG("i: %d direction: %d",player->id , player->direction);
+	MovePlayers(world);
+	world->Field[x][y].type = HEAD;
+}
 #endif /* _WORLD_H_ */
 

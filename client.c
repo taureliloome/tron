@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 	keep_alive = 1;
 	
 	conn_resp_t fakemsg;
-    fakemsg.id = 0;
+    	fakemsg.id = 0;
 	fakemsg.height = 24;  
 	fakemsg.width = 80;
 	fakemsg.playerCount = 5;
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 						break;
 					case 3:
 						/* Update message received; calculate wait for button pressed */
-						DEBUG("Update information recieved\n" /*TODO add data here for debuging */);
+						//DEBUG("Update information recieved\n" /*TODO add data here for debuging */);
 						updateClientWorld(&game,buf);
 						gameStarted = 1;
 						break;
@@ -121,26 +121,32 @@ int main(int argc, char *argv[])
 #endif				
 				init_game();
 				c = wgetch(key_detecter);
-				
+
 				if ( c != ERR ) {
-					ClientMove(c, &game);//TODO pass c to world-done
+					ClientMove(c, &game);
 				}		
 				event.direction = (getSelf(&game))->direction;
+
 				if ( c == ' ')
 					event.shot = 1;
 				else
 					event.shot = 0;
 #ifndef NO_SERVER
 				SendMessage(sockfd, &event, sizeof(event), PCKT_EVENT);
+
 			 	DEBUG("Sending update event { %d, %d } to server \n", event.direction, event.shot );
 	    	}
 #endif
+			calculateField(&game);
 			drawWorld(&game);
-			getchar();
+			//getchar();
 			refresh();
+			nanosleep(&sleep_time, NULL); 
+			NOTICE("%c\n",c);
 #ifndef NO_SERVER
 		}
 #endif
+
 	}
 	NOTICE("Disconnected from server\n");
 	if (fd != NULL)

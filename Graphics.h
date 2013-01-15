@@ -41,25 +41,24 @@ void drawWorld(World_t *MyWorld) {
 	for ( x = 0; x < MyWorld->settings.width; x++ ) {
 		for ( y = 0; y < MyWorld->settings.height; y++ ) {
 			tempCell = MyWorld->Field[x][y];
-			if ( tempCell.type != EMPTY ) {
-				
 				switch ( tempCell.type ) {
-					case 0: /* player */
-						NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);
-						mvaddch(x,y,DRAW_BIKE);
+					case 1:
+					case 2: /* BIKE */
+						//NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);
+						mvaddch(x,y,'%');
 						break;
-					case 1: /* bullet */
-						NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);
-						mvaddch(x,y,DRAW_BULT);
-						break;
-					case 2: /* tail */
-						NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);
+					case 3: /* tail */
+						//NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);
 						mvaddch(x,y,DRAW_TAIL);
 						break;
+					case 4: /* bullet */
+						//NOTICE("x: %d,y:%d, type: %d\n",x,y,tempCell.type);
+						mvaddch(x,y,DRAW_BULT);
+						break;
+					default:
+						mvaddch(x,y,DRAW_BLNK);
+						break;					
 				}
-			} else {
-				mvaddch(x,y,DRAW_BLNK);
-			}
 		}
 	}
 }

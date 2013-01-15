@@ -182,7 +182,9 @@ void *RecieveMessage(int readfd, uint8_t *msg_type, uint8_t *timeout)
 	}
 	msg_hdr.length = ntohl(msg_hdr.length);
 	*msg_type = msg_hdr.type;
+
 	DEBUG2("Received message header type: %d, len: %d\n", msg_hdr.type, msg_hdr.length );
+
 
 	received = 0;
 	void * buf = malloc(msg_hdr.length);
@@ -190,6 +192,7 @@ void *RecieveMessage(int readfd, uint8_t *msg_type, uint8_t *timeout)
 	{
 		received += read(readfd, buf + received, msg_hdr.length - received );
 		DEBUG2("%u/%u\n", received, msg_hdr.length);
+
 	}
 	return buf;	
 }

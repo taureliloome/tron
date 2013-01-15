@@ -39,8 +39,8 @@ typedef struct Tail{
 typedef struct World {
 	WorldCell_t Field[80][24];	/* Divdimensiju masivs ar noradem uz objektu kurš aizņem konkrētu šunu. */
 
-	void *Players;		/* Visu spēlētāju objektu pūls. Satur koordinātes, virzienu utl. */
-	void *Bullets;		/* Visu iespējamo ložu pūls. */
+	upd_player_t *Players;		/* Visu spēlētāju objektu pūls. Satur koordinātes, virzienu utl. */
+	upd_bullet_t *Bullets;		/* Visu iespējamo ložu pūls. */
 
 	Tail_t *Tails;		/* Spēlētāju astes */
 
@@ -58,24 +58,193 @@ upd_player_t* getSelf(World_t *MyWorld)
 	return MyWorld->Players;   // Jo massiva [0] elements ir vienads ar pointera adresi
 }
 
-
-void createPlayer(World_t *someWorld, int id,int x,int y)
+Tail_t * createTail(World_t *someWorld, int id)
 {
-	upd_player_t * playerIt=someWorld->Players+sizeof(upd_player_t)*someWorld->playerCountAlive;
-	struct UpdatePlayer *newPlayer = malloc( sizeof(upd_player_t) );
-	newPlayer->id = id;
-	newPlayer->x = x;
-	newPlayer->y = y;
-	newPlayer->direction = DIR_UP;
-	newPlayer->cooldown = 0;         // Lodes cooldown (Kadros)
-    	newPlayer->gameover = 1;         // 1 - miris, 0 - spēlē
-	memcpy ( playerIt, newPlayer, sizeof(newPlayer));
-	someWorld->playerCountAlive++;
+	int tailCount = someWorld->tailCountAlive;
+	if(someWorld->tailCountAlive < someWorld->playerCountAlive){
+
+		int i = 0; 
+		someWorld->Tails[tailCount].playerId = id;
+		someWorld->Tails[tailCount].length = 0;
+		someWorld->Tails[tailCount].cells = malloc( sizeof(upd_tail_t) * someWorld->settings.tailLength);
+
+		for(i; i < someWorld->settings.tailLength; i++)
+			someWorld->Tails[tailCount].cells[i].x = someWorld->Tails[tailCount].cells[i].y = -1;
+
+		someWorld->tailCountAlive++;
+		return &someWorld->Tails[tailCount];
+	}
+	return NULL;
 }
 
+upd_player_t * createPlayer(World_t *someWorld, int id,int x,int y)
+{
+	int pc = someWorld->playerCountAlive;
+	if(someWorld->playerCountAlive < someWorld->settings.playerCount){
+		
+		someWorld->Players[pc].id = id;
+		someWorld->Players[pc].x = x;
+		someWorld->Players[pc].y = y;
+		someWorld->Players[pc].direction = DIR_UP;
+		someWorld->Players[pc].cooldown = 0;         // Lodes cooldown (Kadros)
+	    	someWorld->Players[pc].gameover = 1;         // 1 - miris, 0 - spēlē
+
+		someWorld->playerCountAlive++;
+
+		return &someWorld->Players[pc] ;
+	}else{
+	  return NULL;
+	}
+
+}
+
+upd_bullet_t *getFreeBullet(World_t * someWorld)
+{
+	upd_bullet_t * bullet;
+	int i = 0;
+	for( i; i < someWorld->bulletCountMax; i++){
+		if(someWorld->Bullets[i].x > -1 && someWorld->Bullets[i].y > -1){
+			someWorld->bulletCountAlive++;
+			return &someWorld->Bullets[i];
+		}		
+	}
+	return NULL;
+}
+
+upd_player_t * findPlayer(World_t *someWorld, int playerId)
+{
+	int i = 0;
+	upd_player_t pl;
+	for(i = 0 ; i < someWorld->playerCountAlive; i++)
+	{
+		pl = someWorld->Players[i];
+		if(pl.id == playerId)
+		{
+			return &someWorld->Players[i];
+		}
+	}
+	return NULL;
+}
+
+upd_bullet_t * findBullet(World_t *someWorld, int bulletId)
+{
+	int i = 0;
+	upd_bullet_t bl;
+	for(i = 0 ; i < someWorld->bulletCountAlive; i++)
+	{
+		bl = someWorld->Bullets[i];
+		if(bl.id == bulletId)
+		{
+			return &someWorld->Bullets[i];
+		}
+	}
+	return NULL;
+}
+
+Tail_t * findTail(World_t *someWorld , int tailId)
+{
+	int i = 0;
+	Tail_t tl;
+	for(i = 0 ; i < someWorld->tailCountAlive; i++)
+	{
+		tl = someWorld->Tails[i];
+		if(tl.playerId == tailId)
+		{
+			return &someWorld->Tails[i];
+		}
+	}
+	return NULL;
+}
+
+void updateClientWorld(World_t *someWorld,void * packet)
+{
+	upd_player_header_t *playerHeader;
+	upd_player_t *tempPlayer, *existPlayer;
+
+	upd_bullet_header_t *bulletHeader;
+	upd_bullet_t *tempBullet, *existBullet;
+
+	upd_total_tail_header_t *tailHeader;
+	upd_tail_header_t *tempTail;
+	upd_tail_t *tempCell;
+	Tail_t *existTail;
+
+	void *iterator = packet;
+	int i = 0, k = 0, t = 0;
+
+
+	/* Handling player list */
+
+	playerHeader = (upd_player_header_t *) iterator;
+	iterator += sizeof(upd_player_header_t);
+
+	for(i = 0 ; i < playerHeader->playerCount; i++){
+		
+		tempPlayer = (upd_player_t *) iterator;
+
+		existPlayer = findPlayer(someWorld, tempPlayer->id); //meklejam speletaju sarakstaa
+		if(existPlayer == NULL){
+			existPlayer = createPlayer( someWorld, tempPlayer->id, tempPlayer->x, tempPlayer->y); //izveidojam speletaju ja nav
+		}
+
+		if(existPlayer != NULL){ //pat ja tads speletajs nepastaveja,  var but ka na brivo vietu
+			memcpy(existPlayer, tempPlayer, sizeof(upd_player_t) ); //kopejam izmainas
+		}
+
+		iterator += sizeof(upd_player_t);
+	}
+
+	/* Handling Bullet list */
+
+	bulletHeader = (upd_bullet_header_t *) iterator;
+	iterator += sizeof(upd_bullet_header_t);
+	
+	for( i = 0; i < bulletHeader->bulletCount; i++){
+		
+		tempBullet = (upd_bullet_t *) iterator;
+		existBullet = findBullet(someWorld, tempBullet->id); //meklejam lodi sarakstaa
+		
+		if(existBullet == NULL){
+			existBullet = getFreeBullet( someWorld); // atgriez brivo lodi no pula vai NULL		
+		}
+		
+		if(existBullet != NULL){
+			memcpy(existBullet,tempBullet, sizeof(upd_bullet_t) );
+		}
+	
+		iterator += sizeof(upd_bullet_t);
+	}
+
+	/* Handling tails */
+
+	tailHeader = (upd_total_tail_header_t*) iterator;
+	iterator += sizeof(upd_total_tail_header_t);
+
+	for(i = 0; i < tailHeader->totalTailLength; i++){
+		tempTail = (upd_tail_header_t*) iterator;
+		existTail = findTail(someWorld , tempTail->id);	
+
+		/*TODO: VEIDOT ASTES UZ SPELETAJA VEIDOSANU	 kkur tur augsa*/
+
+		if(existTail != NULL){  //visas astes ir izveidotas kad tiek veidots speletajs 
+			
+			existTail->length = tempTail->tailCount;
+			
+			for( k = 0; k < tempTail->tailCount; k++){
+				tempCell = (upd_tail_t *) iterator;
+				existTail->cells[k].x = tempCell->x;
+				existTail->cells[k].y =	tempCell->y;
+				tempCell += sizeof(upd_tail_t);
+			}
+		}
+		
+		iterator += sizeof(upd_tail_header_t);
+	}
+
+}
 void init_world(World_t *someWorld)
 {
-	int bulletMultiplier = 0, maxSide = 0, x = 0, y = 0;
+	int bulletMultiplier = 0, maxSide = 0, x = 0, y = 0, i = 0;
 	
 //TODO: remove hardcoded params
 	someWorld->settings.height = 24;    
@@ -120,7 +289,11 @@ void init_world(World_t *someWorld)
 
 	/* Visu iespējamo ložu pūls. */
 	someWorld->Bullets =  malloc( someWorld->bulletCountMax * sizeof(upd_bullet_t) ); 
-	
+	for(i = 0; i < someWorld->bulletCountMax; i++){
+		someWorld->Bullets[i].id = i;  //pieskiram id lodem (DOMATS SERVER PUSEI JA KAS)
+		someWorld->Bullets[i].x=someWorld->Bullets[i].y=-1; //atbrivojam visas lodes
+	}
+
 	/* Visu astes saraksts */
 	someWorld->Tails = (Tail_t *) malloc( someWorld->settings.playerCount * sizeof(Tail_t) ); 
 	
@@ -282,7 +455,12 @@ void CreateClientWorld(World_t *someWorld,conn_resp_t * Params)
    // }
 
 	someWorld->Players = (upd_player_t*)malloc(someWorld->settings.playerCount * sizeof(upd_player_t));
-	createPlayer(someWorld ,Params->id,40,10); //izveidojam pirmo speletaju, to kuru vadis tekošais klients
+
+	createPlayer(someWorld , Params->id,40,10); //izveidojam pirmo speletaju, to kuru vadis tekošais klients
+
+	createTail(someWorld, Params->id); //izveidojam vinam asti garuma 0
+
+
 
 //	someWorld->Field = malloc(Params->width * Params->height * sizeof(void**));
 //
@@ -539,7 +717,6 @@ void MoveBullets(World_t *MyWorld)
 			}
 /*
 				if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
-<<<<<<< Updated upstream
 					[Bullets[i].y+gety(Bullets[i].direction)].type != EMPTY)
 				{
 					if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
@@ -557,19 +734,7 @@ void MoveBullets(World_t *MyWorld)
 					if (MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
 						[Bullets[i].y+gety(Bullets[i].direction)].type == HEAD)
 					{
-					}	
-=======
-<<<<<<< Updated upstream
-					[Bullets[i].y+gety(Bullets[i].direction)]).type == BULLET)
-				{
-				
-				}
-				else
-				if ((MyWorld->Field[Bullets[i].x+getx(Bullets[i].direction)]
-					[Bullets[i].y+gety(Bullets[i].direction)]).type == TAIL)
-				{
-
->>>>>>> Stashed changes
+					}
 
 				}
 				else

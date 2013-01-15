@@ -1,5 +1,3 @@
-#include <stdio>
-#define PLAYER_COUNT 8
 
 /* 
 * 1: Init array with {-1, -1, -1 ,-1 ,-1 ... } 
@@ -10,33 +8,36 @@
 */
 
 //Array of FDs, Index is ID
-list = (int*) malloc((PLAYER_COUNT)*sizeof(int));
 //Input values, need to be changed
-tmp_fd=1;
-tmp_id=0;
 
+/**
 //Debug print
+
 void print(){
     for(int i=0; i<PLAYER_COUNT; i++){
         printf ("Number: %d\n", tmp_id);
     }
+**/
 
 //Intialize array with, {-1,-1,-1,-1,-1...}
-void init(){
-    for(int i=0; i<PLAYER_COUNT; i++){
+int* idInit(int player_count)
+{
+    int *list;
+    int i;
+    list = (int*) malloc((player_count)*sizeof(int));
+    for(i=0; i<player_count; i++){
         list[i]=-1;
     }
+    return list;
+}
 
-void gen_id(){
-    for(int i=0; i<PLAYER_COUNT; i++){
+int idGen(int id, int player_count, int* list)
+{
+    int i;
+    for(i=0; i<player_count; i++){
         if(list[i]==-1){
-            list[i]=tmp_fd;
+            list[i]=id;
         }
     }
     return i;
-}
-
-// Return the FD of given ID
-int get_fd(){
-    return list[tmp_id];
 }
